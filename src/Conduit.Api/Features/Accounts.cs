@@ -19,6 +19,11 @@ namespace Conduit.Api.Features
         public static class Events
         {
             public record UserRegistered(string Email, string Username, string PasswordHash);
+
+            public static void Register()
+            {
+                TypeMap.AddType<UserRegistered>(nameof(UserRegistered));
+            }
         }
 
         [ApiController]
