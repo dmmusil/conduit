@@ -8,12 +8,15 @@ namespace Conduit.Api.Features
     public static class Accounts
     {
         public record UserRegistration(string Email, string Username, string Password);
+        public record UserLogin(string Email, string Password);
 
         public record User(string Email, string Username, string Bio = null, string Image = null, string Token = null);
 
         public static class Commands
         {
             public record Register(UserRegistration User);
+
+            public record LogIn(UserLogin User);
         }
 
         public static class Events
@@ -42,6 +45,13 @@ namespace Conduit.Api.Features
                 var state = result.State;
                 return new User(state.Email, state.Username);
             }
+
+            public async Task<User> LogIn(Commands.LogIn login)
+            {
+                var (state, _) = await _svc.Handle(login);
+                var authResult = state.VerifyPassword(login.User.Password);
+                return authResult ? new User(state.Email, state.Username, Token: "token") : null;
+            }
         }
 
         public class UserService : ApplicationService<Account, AccountState, AccountId>
@@ -52,6 +62,10 @@ namespace Conduit.Api.Features
                 {
                     var hashedPassword = BCrypt.Net.BCrypt.HashPassword(cmd.User.Password);
                     account.Register(cmd.User.Username, cmd.User.Email, hashedPassword);
+                });
+                OnExisting<Commands.LogIn>(cmd => new AccountId(cmd.User.Email), (_, _) =>
+                {
+                    // no op
                 });
             }
         }
@@ -78,6 +92,7 @@ namespace Conduit.Api.Features
             public string PasswordHash { get; init; }
             public string Email { get; init; }
             public string Username { get; init; }
+            public bool VerifyPassword(string password) => BCrypt.Net.BCrypt.Verify(password, PasswordHash);
         }
 
         public class Account : Aggregate<AccountState, AccountId>
