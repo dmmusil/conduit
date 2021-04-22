@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Conduit.Api.Auth;
 using Eventuous;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,35 +30,13 @@ namespace Conduit.Api.Features
             }
         }
 
-        [ApiController]
-        public class UserController : Controller
-        {
-            private readonly UserService _svc;
-
-            public UserController(UserService svc)
-            {
-                _svc = svc;
-            }
-
-            public async Task<User> Register(Commands.Register register)
-            {
-                var result = await _svc.Handle(register);
-                var state = result.State;
-                return new User(state.Email, state.Username);
-            }
-
-            public async Task<User> LogIn(Commands.LogIn login)
-            {
-                var (state, _) = await _svc.Handle(login);
-                var authResult = state.VerifyPassword(login.User.Password);
-                return authResult ? new User(state.Email, state.Username, Token: "token") : null;
-            }
-        }
-
         public class UserService : ApplicationService<Account, AccountState, AccountId>
         {
+            private readonly IAggregateStore _store;
+
             public UserService(IAggregateStore store) : base(store)
             {
+                _store = store;
                 OnNew<Commands.Register>((account, cmd) =>
                 {
                     var hashedPassword = BCrypt.Net.BCrypt.HashPassword(cmd.User.Password);
@@ -67,6 +46,13 @@ namespace Conduit.Api.Features
                 {
                     // no op
                 });
+            }
+
+            public async Task<User> Load(string userId)
+            {
+                var account = await _store.Load<Account>(userId);
+                var state = account.State;
+                return new User(state.Email, state.Username);
             }
         }
 
@@ -99,6 +85,43 @@ namespace Conduit.Api.Features
         {
             public void Register(string username, string email, string passwordHash) =>
                 Apply(new Events.UserRegistered(email, username, passwordHash));
+        }
+    }
+    
+    [ApiController]
+    [Route("api/user")]
+    public class UserController : ControllerBase
+    {
+        private readonly Accounts.UserService _svc;
+        private readonly JwtIssuer _jwtIssuer;
+
+        public UserController(Accounts.UserService svc, JwtIssuer jwtIssuer)
+        {
+            _svc = svc;
+            _jwtIssuer = jwtIssuer;
+        }
+
+        [HttpPost("register")]
+        public async Task<Accounts.User> Register([FromBody] Accounts.Commands.Register register)
+        {
+            var result = await _svc.Handle(register);
+            var state = result.State;
+            return new Accounts.User(state.Email, state.Username);
+        }
+
+        [HttpPost("login")]
+        public async Task<Accounts.User> LogIn([FromBody] Accounts.Commands.LogIn login)
+        {
+            var (state, _) = await _svc.Handle(login);
+            var authResult = state.VerifyPassword(login.User.Password);
+            return authResult ? new Accounts.User(state.Email, state.Username, Token: _jwtIssuer.GenerateJwtToken(state.Email)) : null;
+        }
+
+        [HttpGet]
+        [Authorize]
+        public ActionResult GetCurrentUser()
+        {
+            return Ok(HttpContext.Items["User"]);
         }
     }
 }

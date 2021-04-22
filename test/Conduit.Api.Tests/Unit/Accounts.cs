@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Conduit.Api.Tests
+namespace Conduit.Api.Tests.Unit
 {
     public class Accounts
     {

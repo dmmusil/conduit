@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Eventuous;
 
-namespace Conduit.Api.Tests.Fakes
+namespace Conduit.Api.Fakes
 {
     public class InMemoryEventStore : IEventStore
         {

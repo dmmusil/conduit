@@ -1,4 +1,5 @@
-using Conduit.Api.Tests.Fakes;
+using Conduit.Api.Fakes;
+using Conduit.Api.Features;
 using Eventuous;
 
 namespace Conduit.Api.Tests
@@ -13,11 +14,13 @@ namespace Conduit.Api.Tests
                 var aggregateStore = new AggregateStore(
                     new InMemoryEventStore(),
                     DefaultEventSerializer.Instance);
-                return new Features.Accounts.UserService(aggregateStore);                
+                return new Features.Accounts.UserService(aggregateStore);
             }
         }
 
         public static Features.Accounts.UserRegistration UserRegistration =>
             new("jake@jake.jake", "jake", "jakejake");
+
+        public static Accounts.UserLogin UserLogin => new("jake@jake.jake", "jakejake");
     }
 }
