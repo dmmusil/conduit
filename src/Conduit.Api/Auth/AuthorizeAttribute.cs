@@ -14,8 +14,8 @@ namespace Conduit.Api.Auth
     {
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            var user = (Accounts.User) context.HttpContext.Items["User"];
-            if (user == null)
+            var item = context.HttpContext.Items["User"];
+            if (item == null)
             {
                 // not logged in
                 context.Result = new JsonResult(new {message = "Unauthorized"})

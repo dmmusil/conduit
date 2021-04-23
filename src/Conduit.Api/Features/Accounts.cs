@@ -11,7 +11,7 @@ namespace Conduit.Api.Features
         public record UserRegistration(string Email, string Username, string Password);
         public record UserLogin(string Email, string Password);
 
-        public record User(string Email, string Username, string Bio = null, string Image = null, string Token = null);
+        public record User(string Email, string Username, string? Bio = null, string? Image = null, string? Token = null);
 
         public static class Commands
         {
@@ -75,9 +75,9 @@ namespace Conduit.Api.Features
                 };
             }
 
-            public string PasswordHash { get; init; }
-            public string Email { get; init; }
-            public string Username { get; init; }
+            public string PasswordHash { get; private init; } = null!;
+            public string Email { get; private init; } = null!;
+            public string Username { get; private init; } = null!;
             public bool VerifyPassword(string password) => BCrypt.Net.BCrypt.Verify(password, PasswordHash);
         }
 
@@ -89,13 +89,13 @@ namespace Conduit.Api.Features
     }
     
     [ApiController]
-    [Route("api/user")]
-    public class UserController : ControllerBase
+    [Route("api/users")]
+    public class UsersController : ControllerBase
     {
         private readonly Accounts.UserService _svc;
         private readonly JwtIssuer _jwtIssuer;
 
-        public UserController(Accounts.UserService svc, JwtIssuer jwtIssuer)
+        public UsersController(Accounts.UserService svc, JwtIssuer jwtIssuer)
         {
             _svc = svc;
             _jwtIssuer = jwtIssuer;
@@ -110,13 +110,19 @@ namespace Conduit.Api.Features
         }
 
         [HttpPost("login")]
-        public async Task<Accounts.User> LogIn([FromBody] Accounts.Commands.LogIn login)
+        public async Task<Accounts.User?> LogIn([FromBody] Accounts.Commands.LogIn login)
         {
             var (state, _) = await _svc.Handle(login);
             var authResult = state.VerifyPassword(login.User.Password);
             return authResult ? new Accounts.User(state.Email, state.Username, Token: _jwtIssuer.GenerateJwtToken(state.Email)) : null;
         }
 
+    }
+
+    [ApiController]
+    [Route("api/user")]
+    public class UserController : ControllerBase
+    {
         [HttpGet]
         [Authorize]
         public ActionResult GetCurrentUser()

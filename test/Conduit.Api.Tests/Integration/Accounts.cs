@@ -27,8 +27,22 @@ namespace Conduit.Api.Tests.Integration
             var token = await Login(client);
             await Verify(client, token);
         }
+        
+        private static async Task Register(HttpClient client)
+        {
+            var command = new Features.Accounts.Commands.Register(Fixtures.UserRegistration);
+            await PostCommand(client, command, "/api/users/register");
+        }
+        
+        private static async Task<string?> Login(HttpClient client)
+        {
+            var command = new Features.Accounts.Commands.LogIn(Fixtures.UserLogin);
+            var response = await PostCommand(client, command, "/api/users/login");
+            var user = await response.Content.ReadFromJsonAsync<Features.Accounts.User>();
+            return user?.Token;
+        }
 
-        private static async Task Verify(HttpClient client, string token)
+        private static async Task Verify(HttpClient client, string? token)
         {
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             var response = await client.GetAsync("/api/user");
@@ -36,20 +50,6 @@ namespace Conduit.Api.Tests.Integration
             
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal("jake", user?.Username);
-        }
-
-        private static async Task<string> Login(HttpClient client)
-        {
-            var command = new Features.Accounts.Commands.LogIn(Fixtures.UserLogin);
-            var response = await PostCommand(client, command, "/api/user/login");
-            var user = await response.Content.ReadFromJsonAsync<Features.Accounts.User>();
-            return user?.Token;
-        }
-
-        private static async Task Register(HttpClient client)
-        {
-            var command = new Features.Accounts.Commands.Register(Fixtures.UserRegistration);
-            await PostCommand(client, command, "/api/user/register");
         }
 
         private static async Task<HttpResponseMessage> PostCommand(
@@ -65,7 +65,7 @@ namespace Conduit.Api.Tests.Integration
                     Encoding.UTF8,
                     "application/json"));
 
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(expectedResponseCode, response.StatusCode);
 
             return response;
         }
