@@ -1,7 +1,8 @@
 using Conduit.Api.Auth;
-using Conduit.Api.Fakes;
 using Conduit.Api.Features;
+using EventStore.Client;
 using Eventuous;
+using Eventuous.EventStoreDB;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,10 +16,11 @@ namespace Conduit.Api
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+
             services
-                // singleton required since storage is not durable.
-                // can be scoped when backed by disk.
-                .AddSingleton<IEventStore, InMemoryEventStore>()
+                .AddSingleton(_ =>
+                    new EventStoreClient(EventStoreClientSettings.Create("esdb://admin:changeit@localhost:2113?tls=false")))
+                .AddSingleton<IEventStore, EsDbEventStore>()
                 .AddSingleton(DefaultEventSerializer.Instance)
                 .AddSingleton<AppSettings>()
                 .AddScoped<IAggregateStore, AggregateStore>()

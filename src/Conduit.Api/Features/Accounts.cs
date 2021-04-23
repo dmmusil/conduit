@@ -9,9 +9,11 @@ namespace Conduit.Api.Features
     public static class Accounts
     {
         public record UserRegistration(string Email, string Username, string Password);
+
         public record UserLogin(string Email, string Password);
 
-        public record User(string Email, string Username, string? Bio = null, string? Image = null, string? Token = null);
+        public record User(string Email, string Username, string? Bio = null, string? Image = null,
+            string? Token = null);
 
         public static class Commands
         {
@@ -37,15 +39,19 @@ namespace Conduit.Api.Features
             public UserService(IAggregateStore store) : base(store)
             {
                 _store = store;
-                OnNew<Commands.Register>((account, cmd) =>
-                {
-                    var hashedPassword = BCrypt.Net.BCrypt.HashPassword(cmd.User.Password);
-                    account.Register(cmd.User.Username, cmd.User.Email, hashedPassword);
-                });
-                OnExisting<Commands.LogIn>(cmd => new AccountId(cmd.User.Email), (_, _) =>
-                {
-                    // no op
-                });
+                OnAny<Commands.Register>(
+                    cmd => new AccountId(cmd.User.Email),
+                    (account, cmd) =>
+                    {
+                        var hashedPassword = BCrypt.Net.BCrypt.HashPassword(cmd.User.Password);
+                        account.Register(cmd.User.Username, cmd.User.Email, hashedPassword);
+                    });
+                OnExisting<Commands.LogIn>(
+                    cmd => new AccountId(cmd.User.Email),
+                    (_, _) =>
+                    {
+                        // no op
+                    });
             }
 
             public async Task<User> Load(string userId)
@@ -78,16 +84,21 @@ namespace Conduit.Api.Features
             public string PasswordHash { get; private init; } = null!;
             public string Email { get; private init; } = null!;
             public string Username { get; private init; } = null!;
+            public bool AlreadyRegistered => Id != null;
+
             public bool VerifyPassword(string password) => BCrypt.Net.BCrypt.Verify(password, PasswordHash);
         }
 
         public class Account : Aggregate<AccountState, AccountId>
         {
-            public void Register(string username, string email, string passwordHash) =>
+            public void Register(string username, string email, string passwordHash)
+            {
+                if (State.AlreadyRegistered) return;
                 Apply(new Events.UserRegistered(email, username, passwordHash));
+            }
         }
     }
-    
+
     [ApiController]
     [Route("api/users")]
     public class UsersController : ControllerBase
@@ -114,9 +125,10 @@ namespace Conduit.Api.Features
         {
             var (state, _) = await _svc.Handle(login);
             var authResult = state.VerifyPassword(login.User.Password);
-            return authResult ? new Accounts.User(state.Email, state.Username, Token: _jwtIssuer.GenerateJwtToken(state.Email)) : null;
+            return authResult
+                ? new Accounts.User(state.Email, state.Username, Token: _jwtIssuer.GenerateJwtToken(state.Email))
+                : null;
         }
-
     }
 
     [ApiController]
