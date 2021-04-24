@@ -21,15 +21,15 @@ namespace Conduit.Api.Auth
         /// <summary>
         /// Generate a token that's valid for 7 days.
         /// </summary>
-        /// <param name="email">Email is the user identifier.</param>
+        /// <param name="id">Stream identifier.</param>
         /// <returns>The token.</returns>
-        public string GenerateJwtToken(string email)
+        public string GenerateJwtToken(string id)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[] {new Claim("id", email)}),
+                Subject = new ClaimsIdentity(new[] {new Claim("id", id)}),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature)
