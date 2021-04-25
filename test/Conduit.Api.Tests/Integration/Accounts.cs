@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Conduit.Api.Features.Profiles;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
@@ -34,6 +35,16 @@ namespace Conduit.Api.Tests.Integration
             await AttemptRegisterDuplicate(client);
             await RegisterUniqueUser(client);
             await AttemptUpdateDuplicate(client, token!);
+
+            await GetProfile(client);
+        }
+
+        private static async Task GetProfile(HttpClient client)
+        {
+            var response = await client.GetAsync($"/api/profiles/{Fixtures.UserRegistration.Username}");
+            var profile = await response.Content.ReadFromJsonAsync<Profile>();
+            
+            Assert.Equal(Fixtures.UserRegistration.Username, profile?.Username);
         }
 
         private static async Task AttemptUpdateDuplicate(HttpClient client, string token)
