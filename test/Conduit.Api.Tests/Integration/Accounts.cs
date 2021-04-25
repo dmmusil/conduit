@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
+using MongoDB.Driver;
 using Xunit;
 
 namespace Conduit.Api.Tests.Integration
@@ -21,22 +22,27 @@ namespace Conduit.Api.Tests.Integration
         [Fact]
         public async Task Can_register_login_and_retrieve_current_user()
         {
+            var mongo = (MongoClient)_factory.Services.GetService(typeof(MongoClient))!;
+            mongo.GetDatabase("Conduit");
+            
             var client = _factory.CreateClient();
 
-            await Register(client);
-            var token = await Login(client);
+            var accountId = await Register(client);
+            var token = await Login(client, accountId);
             await Verify(client, token);
         }
         
-        private static async Task Register(HttpClient client)
+        private static async Task<string> Register(HttpClient client)
         {
             var command = new Features.Accounts.Commands.Register(Fixtures.UserRegistration);
-            await PostCommand(client, command, "/api/users/register");
+            var response = await PostCommand(client, command, "/api/users/register");
+            var user = await response.Content.ReadFromJsonAsync<Features.Accounts.User>();
+            return user!.Id;
         }
         
-        private static async Task<string?> Login(HttpClient client)
+        private static async Task<string?> Login(HttpClient client, string id)
         {
-            var command = new Features.Accounts.Commands.LogIn(Fixtures.UserLogin);
+            var command = new Features.Accounts.Commands.LogIn(id, Fixtures.UserLogin);
             var response = await PostCommand(client, command, "/api/users/login");
             var user = await response.Content.ReadFromJsonAsync<Features.Accounts.User>();
             return user?.Token;

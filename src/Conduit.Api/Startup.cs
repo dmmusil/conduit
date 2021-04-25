@@ -38,7 +38,8 @@ namespace Conduit.Api
             Accounts.Events.Register();
             
             const string connectionString = "mongodb://mongoadmin:secret@localhost:27017/?authSource=admin&readPreference=primary&ssl=false";
-            services.AddSingleton(_ => new MongoClient(connectionString).GetDatabase("Conduit"))
+            services.AddSingleton(_ => new MongoClient(connectionString));
+            services.AddSingleton(o => o.GetService<MongoClient>()!.GetDatabase("Conduit"))
                 .AddSingleton<ICheckpointStore, MongoCheckpointStore>();
             
             services.AddSingleton(o => new ConduitSubscriber(

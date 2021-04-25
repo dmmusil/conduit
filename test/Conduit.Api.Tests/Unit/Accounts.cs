@@ -18,18 +18,5 @@ namespace Conduit.Api.Tests.Unit
             Assert.Equal(user.Username, actual.Username);
             Assert.True(BCrypt.Net.BCrypt.Verify(user.Password, actual.PasswordHash));
         }
-
-        [Fact]
-        public async Task Can_login()
-        {
-            var svc = Fixtures.UserService;
-            var user = Fixtures.UserRegistration;
-            await svc.Handle(new Features.Accounts.Commands.Register(user));
-
-            var result = await svc.Handle(
-                new Features.Accounts.Commands.LogIn(new Features.Accounts.UserLogin(user.Email, user.Password)));
-
-            Assert.True(result.State.VerifyPassword(user.Password));
-        }
     }
 }
