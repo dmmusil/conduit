@@ -14,8 +14,12 @@ namespace Conduit.Api.Features
 
         public record UserLogin(string Email, string Password);
 
-        public record UserUpdate(string? Email, string? Username, string? Password, string? Bio,
-            string? Image);
+        public record UserUpdate(
+            string? Email = null, 
+            string? Username = null, 
+            string? Password = null,
+            string? Bio = null,
+            string? Image = null);
 
         public record User(string Id, string Email, string Username, string? Bio = null, string? Image = null,
             string? Token = null);
@@ -184,7 +188,6 @@ namespace Conduit.Api.Features
                 var userWithEmail = await GetUserByEmail(email);
                 return userWithEmail != null && userWithEmail.Id != user?.Id;
             }
-
         }
     }
 
