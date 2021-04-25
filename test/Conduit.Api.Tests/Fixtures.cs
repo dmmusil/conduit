@@ -1,26 +1,26 @@
 using Conduit.Api.Fakes;
-using Conduit.Api.Features;
+using Conduit.Api.Features.Accounts;
 using Eventuous;
 
 namespace Conduit.Api.Tests
 {
     public static class Fixtures
     {
-        public static Features.Accounts.UserService UserService
+        public static UserService UserService
         {
             get
             {
-                Features.Accounts.Events.Register();
+                Events.Register();
                 var aggregateStore = new AggregateStore(
                     new InMemoryEventStore(),
                     DefaultEventSerializer.Instance);
-                return new Features.Accounts.UserService(aggregateStore);
+                return new UserService(aggregateStore);
             }
         }
 
-        public static Features.Accounts.UserRegistration UserRegistration =>
+        public static UserRegistration UserRegistration =>
             new("jake@jake.jake", "jake", "jakejake");
 
-        public static Accounts.UserLogin UserLogin => new("jake@jake.jake", "jakejake");
+        public static UserLogin UserLogin => new("jake@jake.jake", "jakejake");
     }
 }

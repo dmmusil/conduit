@@ -1,5 +1,5 @@
 using Conduit.Api.Auth;
-using Conduit.Api.Features;
+using Conduit.Api.Features.Accounts;
 using Conduit.Api.Infrastructure;
 using EventStore.Client;
 using Eventuous;
@@ -29,13 +29,13 @@ namespace Conduit.Api
                 .AddSingleton(DefaultEventSerializer.Instance)
                 .AddSingleton<AppSettings>()
                 .AddScoped<IAggregateStore, AggregateStore>()
-                .AddScoped<Accounts.UserService>()
-                .AddScoped<Accounts.UserRepository>()
+                .AddScoped<UserService>()
+                .AddScoped<UserRepository>()
                 .AddScoped<JwtIssuer>()
                 .AddCors()
                 .AddControllers();
 
-            Accounts.Events.Register();
+            Events.Register();
             
             const string connectionString = "mongodb://mongoadmin:secret@localhost:27017/?authSource=admin&readPreference=primary&ssl=false";
             services.AddSingleton(_ => new MongoClient(connectionString));

@@ -3,7 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Conduit.Api.Features;
+using Conduit.Api.Features.Accounts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
 
@@ -24,7 +24,7 @@ namespace Conduit.Api.Auth
             _appSettings = appSettings;
         }
 
-        public async Task Invoke(HttpContext context, Accounts.UserService userService)
+        public async Task Invoke(HttpContext context, UserService userService)
         {
             var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
@@ -36,7 +36,7 @@ namespace Conduit.Api.Auth
             await _next(context);
         }
 
-        private async Task AttachUserToContext(HttpContext context, Accounts.UserService userService, string token)
+        private async Task AttachUserToContext(HttpContext context, UserService userService, string token)
         {
             try
             {
