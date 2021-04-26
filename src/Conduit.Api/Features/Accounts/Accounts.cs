@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Eventuous;
 using Eventuous.Projections.MongoDB.Tools;
@@ -28,6 +30,10 @@ namespace Conduit.Api.Features.Accounts
         public record LogIn(string? StreamId, UserLogin User);
 
         public record UpdateUser(string? StreamId, UserUpdate User);
+
+        public record FollowUser(string StreamId, string FollowedId);
+
+        public record UnfollowUser(string StreamId, string FollowedId);
     }
 
     public static class Events
@@ -44,6 +50,10 @@ namespace Conduit.Api.Features.Accounts
 
         public record EmailUpdated(string StreamId, string Email);
 
+        public record AccountFollowed(string StreamId, string FollowedId);
+
+        public record AccountUnfollowed(string StreamId, string UnfollowedId);
+
         public static void Register()
         {
             TypeMap.AddType<UserRegistered>(nameof(UserRegistered));
@@ -52,6 +62,8 @@ namespace Conduit.Api.Features.Accounts
             TypeMap.AddType<BioUpdated>(nameof(BioUpdated));
             TypeMap.AddType<ImageUpdated>(nameof(ImageUpdated));
             TypeMap.AddType<EmailUpdated>(nameof(EmailUpdated));
+            TypeMap.AddType<AccountFollowed>(nameof(AccountFollowed));
+            TypeMap.AddType<AccountUnfollowed>(nameof(AccountUnfollowed));
         }
     }
 
@@ -63,7 +75,8 @@ namespace Conduit.Api.Features.Accounts
                 string Username,
                 string PasswordHash,
                 string? Bio,
-                string? Image)
+                string? Image,
+                IEnumerable<string> Following)
             : ProjectedDocument(StreamId)
         {
             public bool VerifyPassword(string password) => BCrypt.Net.BCrypt.Verify(password, PasswordHash);
@@ -90,13 +103,19 @@ namespace Conduit.Api.Features.Accounts
                     var (email, username, password, bio, image) = cmd.User;
                     account.Update(email, username, password, bio, image);
                 });
+            OnExisting<Commands.FollowUser>(
+                cmd => new AccountId(cmd.StreamId),
+                (account, cmd) => account.Follow(cmd.FollowedId));
+            OnExisting<Commands.UnfollowUser>(
+                cmd => new AccountId(cmd.StreamId),
+                (account, cmd) => account.Unfollow(cmd.FollowedId));
         }
 
         public async Task<User> Load(string userId)
         {
-            var account = await _store.Load<Account>(userId);
+            var account = await _store.Load<Account>(new AccountId(userId));
             var state = account.State;
-            return new User(state.Id, state.Email, state.Username);
+            return new User(userId, state.Email, state.Username);
         }
     }
 
@@ -120,6 +139,8 @@ namespace Conduit.Api.Features.Accounts
                 Events.BioUpdated(_, var bio) => this with {Bio = bio},
                 Events.PasswordUpdated(_, var passwordHash) => this with {PasswordHash = passwordHash},
                 Events.ImageUpdated(_, var image) => this with {Image = image},
+                Events.AccountFollowed e => this with {FollowedProfiles = FollowedProfiles.Add(e.FollowedId)},
+                Events.AccountUnfollowed e => this with {FollowedProfiles = FollowedProfiles.Remove(e.UnfollowedId)},
                 _ => throw new ArgumentOutOfRangeException(nameof(@event), "Unknown event")
             };
         }
@@ -127,9 +148,13 @@ namespace Conduit.Api.Features.Accounts
         public string PasswordHash { get; private init; } = null!;
         public string Email { get; private init; } = null!;
         public string Username { get; private init; } = null!;
-        public bool AlreadyRegistered => Id != null;
         public string? Bio { get; private init; }
         public string? Image { get; private init; }
+        private ImmutableHashSet<string> FollowedProfiles { get; init; } = ImmutableHashSet<string>.Empty;
+
+        public bool AlreadyRegistered => Id != null;
+        public bool AlreadyFollowing(string followedId) => FollowedProfiles.Contains(followedId);
+        public bool NotFollowing(string followedId) => !AlreadyFollowing(followedId);
     }
 
     public class Account : Aggregate<AccountState, AccountId>
@@ -149,6 +174,20 @@ namespace Conduit.Api.Features.Accounts
                 Apply(new Events.PasswordUpdated(State.Id, BCrypt.Net.BCrypt.HashPassword(password)));
             if (bio != null) Apply(new Events.BioUpdated(State.Id, bio));
             if (image != null) Apply(new Events.ImageUpdated(State.Id, image));
+        }
+
+        public void Follow(string followedId)
+        {
+            EnsureExists();
+            if (State.AlreadyFollowing(followedId)) return;
+            Apply(new Events.AccountFollowed(State.Id, followedId));
+        }
+
+        public void Unfollow(string followedId)
+        {
+            EnsureExists();
+            if (State.NotFollowing(followedId)) return;
+            Apply(new Events.AccountUnfollowed(State.Id, followedId));
         }
     }
 
@@ -183,6 +222,12 @@ namespace Conduit.Api.Features.Accounts
             if (email == null) return false;
             var userWithEmail = await GetUserByEmail(email);
             return userWithEmail != null && userWithEmail.Id != user?.Id;
+        }
+
+        public async Task<Projections.UserDocument> GetUserByUuid(string uuid)
+        {
+            var query = await _database.FindAsync(d => d.Id == uuid);
+            return await query.SingleOrDefaultAsync();
         }
     }
 }

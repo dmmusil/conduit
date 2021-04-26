@@ -1,16 +1,15 @@
 using System.Threading.Tasks;
-using Conduit.Api.Features.Accounts;
 using Eventuous.Projections.MongoDB;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
-namespace Conduit.Api.Infrastructure
+namespace Conduit.Api.Features.Accounts
 {
-    public class ConduitEventHandler : MongoProjection<Projections.UserDocument>
+    public class AccountsEventHandler : MongoProjection<Projections.UserDocument>
     {
-        private readonly ILogger<ConduitEventHandler> _loggerFactory;
+        private readonly ILogger<AccountsEventHandler> _loggerFactory;
 
-        public ConduitEventHandler(
+        public AccountsEventHandler(
             IMongoDatabase database,
             string subscriptionGroup,
             ILoggerFactory loggerFactory)
@@ -19,19 +18,19 @@ namespace Conduit.Api.Infrastructure
                 subscriptionGroup,
                 loggerFactory)
         {
-            _loggerFactory = loggerFactory.CreateLogger<ConduitEventHandler>();
+            _loggerFactory = loggerFactory.CreateLogger<AccountsEventHandler>();
         }
 
         protected override ValueTask<Operation<Projections.UserDocument>> GetUpdate(object evt)
         {
-            _loggerFactory.LogInformation($"Processing {evt.GetType()}");
             return evt switch
             {
                 Events.UserRegistered(var streamId, var email, var username, var passwordHash)
                     => UpdateOperationTask(streamId,
                         update => update.Set(d => d.Email, email)
                             .Set(d => d.Username, username)
-                            .Set(d => d.PasswordHash, passwordHash)),
+                            .Set(d => d.PasswordHash, passwordHash)
+                            .Set(d => d.Following, System.Array.Empty<string>())),
                 Events.EmailUpdated (var streamId, var email) => UpdateOperationTask(streamId,
                     u => u.Set(d => d.Email, email)),
                 Events.UsernameUpdated (var streamId, var username) => UpdateOperationTask(streamId,
@@ -42,6 +41,10 @@ namespace Conduit.Api.Infrastructure
                     u => u.Set(d => d.Bio, bio)),
                 Events.ImageUpdated (var streamId, var image) => UpdateOperationTask(streamId,
                     u => u.Set(d => d.Image, image)),
+                Events.AccountFollowed(var streamId, var followedId) => UpdateOperationTask(streamId,
+                    u => u.AddToSet(d => d.Following, followedId)),
+                Events.AccountUnfollowed(var streamId, var followedId) => UpdateOperationTask(streamId,
+                    u => u.Pull(d => d.Following, followedId)),
                 _ => NoOp
             };
         }

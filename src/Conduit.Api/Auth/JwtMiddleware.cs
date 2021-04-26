@@ -53,7 +53,6 @@ namespace Conduit.Api.Auth
 
                 var jwtToken = (JwtSecurityToken) validatedToken;
                 var userId = jwtToken.Claims.First(x => x.Type == "id").Value;
-
                 // attach user to context o successful jwt validation
                 var account = await userService.Load(userId);
                 context.Items["User"] = account;

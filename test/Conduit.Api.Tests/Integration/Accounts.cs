@@ -5,7 +5,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Conduit.Api.Features.Profiles;
+using Conduit.Api.Features.Accounts;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
@@ -37,6 +37,36 @@ namespace Conduit.Api.Tests.Integration
             await AttemptUpdateDuplicate(client, token!);
 
             await GetProfile(client);
+
+            await Follow(client, token, UniqueUsername);
+            await Unfollow(client, token, UniqueUsername);
+        }
+
+        private static async Task Follow(HttpClient client, string? token, string usernameToFollow)
+        {
+            var response = await client.PostAsync(
+                $"/api/profiles/{usernameToFollow}/follow", 
+                new StringContent(""));
+            
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            
+            response = await client.GetAsync($"/api/profiles/{usernameToFollow}");
+            var profile = await response.Content.ReadFromJsonAsync<Profile>();
+            
+            Assert.True(profile!.Following);
+        }
+
+        private static async Task Unfollow(HttpClient client, string? token, string usernameToUnfollow)
+        {
+            var response = await client.DeleteAsync(
+                $"/api/profiles/{usernameToUnfollow}/follow");
+            
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            
+            response = await client.GetAsync($"/api/profiles/{usernameToUnfollow}");
+            var profile = await response.Content.ReadFromJsonAsync<Profile>();
+            
+            Assert.False(profile!.Following);
         }
 
         private static async Task GetProfile(HttpClient client)
@@ -49,8 +79,8 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task AttemptUpdateDuplicate(HttpClient client, string token)
         {
-            var command = new Features.Accounts.Commands.UpdateUser(null,
-                new Features.Accounts.UserUpdate(Username: UniqueUsername));
+            var command = new Commands.UpdateUser(null,
+                new UserUpdate(Username: UniqueUsername));
             await SendCommand(client,
                 command, "/api/user",
                 method: HttpMethod.Put, headers: new Dictionary<string, string>
@@ -59,8 +89,8 @@ namespace Conduit.Api.Tests.Integration
                 },
                 expectedResponseCode: HttpStatusCode.Conflict);
 
-            command = new Features.Accounts.Commands.UpdateUser(null,
-                new Features.Accounts.UserUpdate(Email: UniqueEmail));
+            command = new Commands.UpdateUser(null,
+                new UserUpdate(Email: UniqueEmail));
             await SendCommand(client,
                 command, "/api/user",
                 method: HttpMethod.Put, headers: new Dictionary<string, string>
@@ -72,25 +102,25 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task RegisterUniqueUser(HttpClient client)
         {
-            var command = new Features.Accounts.Commands.Register(Fixtures.UserRegistration with
+            var command = new Commands.Register(Fixtures.UserRegistration with
             {
                 Email = UniqueEmail,
                 Username = UniqueUsername
             });
             var response = await SendCommand(client, command, "/api/users/register");
-            await response.Content.ReadFromJsonAsync<Features.Accounts.User>();
+            await response.Content.ReadFromJsonAsync<User>();
         }
 
         private static async Task AttemptRegisterDuplicate(HttpClient client)
         {
-            var command = new Features.Accounts.Commands.Register(Fixtures.UserRegistration);
+            var command = new Commands.Register(Fixtures.UserRegistration);
             await SendCommand(client, command, "/api/users/register", HttpStatusCode.Conflict);
         }
 
         private static async Task Update(HttpClient client, string? token)
         {
-            var command = new Features.Accounts.Commands.UpdateUser(null,
-                new Features.Accounts.UserUpdate(Bio: "I work at State Farm."));
+            var command = new Commands.UpdateUser(null,
+                new UserUpdate(Bio: "I work at State Farm."));
             await SendCommand(client,
                 command, "/api/user",
                 method: HttpMethod.Put, headers: new Dictionary<string, string>
@@ -101,17 +131,17 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task<string> Register(HttpClient client)
         {
-            var command = new Features.Accounts.Commands.Register(Fixtures.UserRegistration);
+            var command = new Commands.Register(Fixtures.UserRegistration);
             var response = await SendCommand(client, command, "/api/users/register");
-            var user = await response.Content.ReadFromJsonAsync<Features.Accounts.User>();
+            var user = await response.Content.ReadFromJsonAsync<User>();
             return user!.Id;
         }
 
         private static async Task<string?> Login(HttpClient client, string id)
         {
-            var command = new Features.Accounts.Commands.LogIn(id, Fixtures.UserLogin);
+            var command = new Commands.LogIn(id, Fixtures.UserLogin);
             var response = await SendCommand(client, command, "/api/users/login");
-            var user = await response.Content.ReadFromJsonAsync<Features.Accounts.User>();
+            var user = await response.Content.ReadFromJsonAsync<User>();
             return user?.Token;
         }
 
@@ -119,7 +149,7 @@ namespace Conduit.Api.Tests.Integration
         {
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
             var response = await client.GetAsync("/api/user");
-            var user = await response.Content.ReadFromJsonAsync<Features.Accounts.User>();
+            var user = await response.Content.ReadFromJsonAsync<User>();
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal("jake", user?.Username);

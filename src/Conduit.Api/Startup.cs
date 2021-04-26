@@ -49,7 +49,7 @@ namespace Conduit.Api
                 o.GetService<IEventSerializer>()!,
                 new IEventHandler[]
                 {
-                    new ConduitEventHandler(
+                    new AccountsEventHandler(
                         o.GetService<IMongoDatabase>()!, 
                         "Conduit", 
                         o.GetService<ILoggerFactory>()!)
