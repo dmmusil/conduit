@@ -66,7 +66,7 @@ namespace Conduit.Api.Tests.Integration
             var body =
                 await response.Content.ReadFromJsonAsync<ArticleEnvelope>();
 
-            const string expectedSlug = "how-to-train-your-dragons";
+            const string expectedSlug = "how-to-train-your-dragon";
             Assert.Equal(expectedSlug, body?.Article.Slug);
 
             response = await GetFromProjection(client, $"/api/articles/{expectedSlug}");
