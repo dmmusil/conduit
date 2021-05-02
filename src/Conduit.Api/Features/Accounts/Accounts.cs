@@ -229,5 +229,27 @@ namespace Conduit.Api.Features.Accounts
             var query = await _database.FindAsync(d => d.Id == uuid);
             return await query.SingleOrDefaultAsync();
         }
+
+        public async Task<Profile?> ProfileWithFollowingStatus(
+            string username,
+            string? callerId)
+        {
+            var profile = await GetUserByUsername(username);
+            if (profile == null) return null;
+
+            if (callerId == null)
+                return new Profile(
+                    profile.Username,
+                    profile.Bio,
+                    profile.Image,
+                    false);
+
+            var callerProfile = await GetUserByUuid(callerId);
+            return new Profile(
+                profile.Username,
+                profile.Bio,
+                profile.Image,
+                callerProfile.IsFollowing(profile.Id));
+        }
     }
 }

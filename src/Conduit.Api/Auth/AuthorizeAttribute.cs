@@ -13,7 +13,7 @@ namespace Conduit.Api.Auth
     {
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            var item = context.HttpContext.Items["User"];
+            var item = context.HttpContext.TryGetLoggedInUser();
             if (item == null)
             {
                 // not logged in
