@@ -21,4 +21,4 @@ jobs:
       run: dotnet restore
     - name: Run tests
       shell: bash
-      run: chmod +x ./tests.sh && ./tests.sh
+      run: chmod +x ./test.sh && ./test.sh
