@@ -14,8 +14,4 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.5" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Features\Accounts\Commands" />
-  </ItemGroup>
-
 </Project>

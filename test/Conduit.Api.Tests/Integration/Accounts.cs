@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Conduit.Api.Features.Accounts;
+using Conduit.Api.Features.Accounts.Commands;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
@@ -38,13 +39,12 @@ namespace Conduit.Api.Tests.Integration
 
             await GetProfile(client);
 
-            await Follow(client, token, UniqueUsername);
-            await Unfollow(client, token, UniqueUsername);
+            await Follow(client, UniqueUsername);
+            await Unfollow(client, UniqueUsername);
         }
 
         private static async Task Follow(
             HttpClient client,
-            string? token,
             string usernameToFollow)
         {
             var response = await client.PostAsync(
@@ -62,7 +62,6 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task Unfollow(
             HttpClient client,
-            string? token,
             string usernameToUnfollow)
         {
             var response = await client.DeleteAsync(
@@ -90,7 +89,7 @@ namespace Conduit.Api.Tests.Integration
             HttpClient client,
             string token)
         {
-            var command = new Commands.UpdateUser(
+            var command = new UpdateUser(
                 null,
                 new UserUpdate(Username: UniqueUsername));
             await SendCommand(
@@ -104,7 +103,7 @@ namespace Conduit.Api.Tests.Integration
                 },
                 expectedResponseCode: HttpStatusCode.Conflict);
 
-            command = new Commands.UpdateUser(
+            command = new UpdateUser(
                 null,
                 new UserUpdate(Email: UniqueEmail));
             await SendCommand(
@@ -121,7 +120,7 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task RegisterUniqueUser(HttpClient client)
         {
-            var command = new Commands.Register(
+            var command = new Register(
                 Fixtures.UserRegistration with
                 {
                     Email = UniqueEmail,
@@ -136,7 +135,7 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task AttemptRegisterDuplicate(HttpClient client)
         {
-            var command = new Commands.Register(Fixtures.UserRegistration);
+            var command = new Register(Fixtures.UserRegistration);
             await SendCommand(
                 client,
                 command,
@@ -146,7 +145,7 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task Update(HttpClient client, string? token)
         {
-            var command = new Commands.UpdateUser(
+            var command = new UpdateUser(
                 null,
                 new UserUpdate(Bio: "I work at State Farm."));
             await SendCommand(
@@ -162,7 +161,7 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task<string> Register(HttpClient client)
         {
-            var command = new Commands.Register(Fixtures.UserRegistration);
+            var command = new Register(Fixtures.UserRegistration);
             var response = await SendCommand(
                 client,
                 command,
@@ -173,7 +172,7 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task<string?> Login(HttpClient client, string id)
         {
-            var command = new Commands.LogIn(id, Fixtures.UserLogin);
+            var command = new LogIn(id, Fixtures.UserLogin);
             var response = await SendCommand(
                 client,
                 command,

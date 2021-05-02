@@ -1,5 +1,6 @@
 using Conduit.Api.Fakes;
 using Conduit.Api.Features.Accounts;
+using Conduit.Api.Features.Accounts.Events;
 using Eventuous;
 
 namespace Conduit.Api.Tests
@@ -10,7 +11,7 @@ namespace Conduit.Api.Tests
         {
             get
             {
-                Events.Register();
+                AccountsRegistration.Register();
                 var aggregateStore = new AggregateStore(
                     new InMemoryEventStore(),
                     DefaultEventSerializer.Instance);

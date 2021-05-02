@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts;
+using Conduit.Api.Features.Accounts.Queries;
 using Conduit.Api.Features.Articles.Commands;
 using Microsoft.AspNetCore.Mvc;
 

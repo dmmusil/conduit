@@ -1,7 +1,7 @@
 using System;
 using Eventuous.Projections.MongoDB.Tools;
 
-namespace Conduit.Api.Features.Articles
+namespace Conduit.Api.Features.Articles.Projections
 {
     public record ArticleDocument(
         string ArticleId,

@@ -1,5 +1,9 @@
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts;
+using Conduit.Api.Features.Accounts.Events;
+using Conduit.Api.Features.Accounts.Projectors;
+using Conduit.Api.Features.Accounts.Queries;
+using Conduit.Api.Features.Articles.Events;
 using Conduit.Api.Infrastructure;
 using EventStore.Client;
 using Eventuous;
@@ -36,7 +40,8 @@ namespace Conduit.Api
                 .AddCors()
                 .AddControllers();
 
-            Events.Register();
+            AccountsRegistration.Register();
+            ArticlesRegistration.Register();
 
             const string connectionString =
                 "mongodb://mongoadmin:secret@localhost:27017/?authSource=admin&readPreference=primary&ssl=false";

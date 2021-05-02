@@ -1,6 +1,8 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Conduit.Api.Auth;
+using Conduit.Api.Features.Accounts.Aggregates;
+using Conduit.Api.Features.Accounts.Queries;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Conduit.Api.Features.Accounts

@@ -3,7 +3,7 @@ using Eventuous.Projections.MongoDB;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
-namespace Conduit.Api.Features.Accounts
+namespace Conduit.Api.Features.Accounts.Projectors
 {
     public class
         AccountsEventHandler : MongoProjection<Projections.UserDocument>

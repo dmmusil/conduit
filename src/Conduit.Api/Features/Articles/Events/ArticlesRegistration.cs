@@ -2,7 +2,7 @@ using Eventuous;
 
 namespace Conduit.Api.Features.Articles.Events
 {
-    public static class Registration
+    public static class ArticlesRegistration
     {
         public static void Register()
         {

@@ -1,10 +1,11 @@
 using System.Threading.Tasks;
 using Conduit.Api.Features.Articles.Events;
+using Conduit.Api.Features.Articles.Projections;
 using Eventuous.Projections.MongoDB;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
-namespace Conduit.Api.Features.Articles
+namespace Conduit.Api.Features.Articles.Projectors
 {
     public class ArticleEventHandler : MongoProjection<ArticleDocument>
     {
