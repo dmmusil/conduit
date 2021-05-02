@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -68,7 +69,7 @@ namespace Conduit.Api.Tests.Integration
             const string expectedSlug = "how-to-train-your-dragon";
             Assert.Equal(expectedSlug, body?.Article.Slug);
 
-            response = await client.GetAsync($"/api/articles/{expectedSlug}");
+            response = await GetFromProjection(client, $"/api/articles/{expectedSlug}");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             body = await response.Content.ReadFromJsonAsync<ArticleEnvelope>();
@@ -76,6 +77,19 @@ namespace Conduit.Api.Tests.Integration
             Assert.Equal(
                 Fixtures.UserRegistration.Username,
                 body?.Article.Author.Username);
+        }
+
+        private static async Task<HttpResponseMessage> GetFromProjection(HttpClient client, string route)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            
+            while (stopwatch.ElapsedMilliseconds < 2000)
+            {
+                var response = await client.GetAsync(route);
+                if (response.IsSuccessStatusCode) return response;
+            }
+
+            throw new Exception("Projection didn't run within 2 seconds.");
         }
 
         private static async Task Follow(
