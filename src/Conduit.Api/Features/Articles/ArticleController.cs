@@ -14,9 +14,7 @@ namespace Conduit.Api.Features.Articles
         private readonly UserRepository _repo;
         private readonly ArticleService _svc;
 
-        public ArticleController(
-            UserRepository repo,
-            ArticleService svc) =>
+        public ArticleController(UserRepository repo, ArticleService svc) =>
             (_repo, _svc) = (repo, svc);
 
         [HttpPost]
@@ -31,12 +29,7 @@ namespace Conduit.Api.Features.Articles
                 title,
                 description,
                 body,
-                new Author(
-                    authorId,
-                    username,
-                    bio,
-                    image,
-                    false),
+                new Author(authorId, username, bio, image, false),
                 tags);
             var (a, _) = await _svc.Handle(cmd);
             var response = new ArticleResponse(

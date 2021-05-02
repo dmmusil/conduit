@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
 using Eventuous;
 using Eventuous.Projections.MongoDB.Tools;
@@ -8,7 +9,10 @@ using MongoDB.Driver;
 
 namespace Conduit.Api.Features.Accounts
 {
-    public record UserRegistration(string Email, string Username, string Password);
+    public record UserRegistration(
+        string Email,
+        string Username,
+        string Password);
 
     public record UserLogin(string Email, string Password);
 
@@ -19,7 +23,12 @@ namespace Conduit.Api.Features.Accounts
         string? Bio = null,
         string? Image = null);
 
-    public record User(string Id, string Email, string Username, string? Bio = null, string? Image = null,
+    public record User(
+        string Id,
+        string Email,
+        string Username,
+        string? Bio = null,
+        string? Image = null,
         string? Token = null);
 
 
@@ -38,7 +47,11 @@ namespace Conduit.Api.Features.Accounts
 
     public static class Events
     {
-        public record UserRegistered(string StreamId, string Email, string Username, string PasswordHash);
+        public record UserRegistered(
+            string StreamId,
+            string Email,
+            string Username,
+            string PasswordHash);
 
         public record UsernameUpdated(string StreamId, string Username);
 
@@ -70,20 +83,24 @@ namespace Conduit.Api.Features.Accounts
     public static class Projections
     {
         public record UserDocument(
-                string StreamId,
-                string Email,
-                string Username,
-                string PasswordHash,
-                string? Bio,
-                string? Image,
-                IEnumerable<string> Following)
-            : ProjectedDocument(StreamId)
+            string StreamId,
+            string Email,
+            string Username,
+            string PasswordHash,
+            string? Bio,
+            string? Image,
+            IEnumerable<string> Following) : ProjectedDocument(StreamId)
         {
-            public bool VerifyPassword(string password) => BCrypt.Net.BCrypt.Verify(password, PasswordHash);
+            public bool VerifyPassword(string password) =>
+                BCrypt.Net.BCrypt.Verify(password, PasswordHash);
+
+            public bool IsFollowing(string authorId) =>
+                Following.Contains(authorId);
         }
     }
 
-    public class UserService : ApplicationService<Account, AccountState, AccountId>
+    public class
+        UserService : ApplicationService<Account, AccountState, AccountId>
     {
         private readonly IAggregateStore _store;
 
@@ -93,8 +110,12 @@ namespace Conduit.Api.Features.Accounts
             OnNew<Commands.Register>(
                 (account, cmd) =>
                 {
-                    var hashedPassword = BCrypt.Net.BCrypt.HashPassword(cmd.User.Password);
-                    account.Register(cmd.User.Username, cmd.User.Email, hashedPassword);
+                    var hashedPassword =
+                        BCrypt.Net.BCrypt.HashPassword(cmd.User.Password);
+                    account.Register(
+                        cmd.User.Username,
+                        cmd.User.Email,
+                        hashedPassword);
                 });
             OnExisting<Commands.UpdateUser>(
                 cmd => new AccountId(cmd.StreamId!),
@@ -127,21 +148,36 @@ namespace Conduit.Api.Features.Accounts
         {
             return @event switch
             {
-                Events.UserRegistered(var streamId, var email, var username, var passwordHash) => this with
+                Events.UserRegistered(var streamId, var email, var username, var
+                    passwordHash) => this with
+                    {
+                        Id = new AccountId(streamId),
+                        Email = email,
+                        Username = username,
+                        PasswordHash = passwordHash
+                    },
+                Events.EmailUpdated(_, var email) => this with {Email = email},
+                Events.UsernameUpdated(_, var username) => this with
                 {
-                    Id = new AccountId(streamId),
-                    Email = email,
-                    Username = username,
+                    Username = username
+                },
+                Events.BioUpdated(_, var bio) => this with {Bio = bio},
+                Events.PasswordUpdated(_, var passwordHash) => this with
+                {
                     PasswordHash = passwordHash
                 },
-                Events.EmailUpdated(_, var email) => this with {Email = email},
-                Events.UsernameUpdated(_, var username) => this with {Username = username},
-                Events.BioUpdated(_, var bio) => this with {Bio = bio},
-                Events.PasswordUpdated(_, var passwordHash) => this with {PasswordHash = passwordHash},
                 Events.ImageUpdated(_, var image) => this with {Image = image},
-                Events.AccountFollowed e => this with {FollowedProfiles = FollowedProfiles.Add(e.FollowedId)},
-                Events.AccountUnfollowed e => this with {FollowedProfiles = FollowedProfiles.Remove(e.UnfollowedId)},
-                _ => throw new ArgumentOutOfRangeException(nameof(@event), "Unknown event")
+                Events.AccountFollowed e => this with
+                {
+                    FollowedProfiles = FollowedProfiles.Add(e.FollowedId)
+                },
+                Events.AccountUnfollowed e => this with
+                {
+                    FollowedProfiles = FollowedProfiles.Remove(e.UnfollowedId)
+                },
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(@event),
+                    "Unknown event")
             };
         }
 
@@ -150,11 +186,17 @@ namespace Conduit.Api.Features.Accounts
         public string Username { get; private init; } = null!;
         public string? Bio { get; private init; }
         public string? Image { get; private init; }
-        private ImmutableHashSet<string> FollowedProfiles { get; init; } = ImmutableHashSet<string>.Empty;
+
+        private ImmutableHashSet<string> FollowedProfiles { get; init; } =
+            ImmutableHashSet<string>.Empty;
 
         public bool AlreadyRegistered => Id != null;
-        public bool AlreadyFollowing(string followedId) => FollowedProfiles.Contains(followedId);
-        public bool NotFollowing(string followedId) => !AlreadyFollowing(followedId);
+
+        public bool AlreadyFollowing(string followedId) =>
+            FollowedProfiles.Contains(followedId);
+
+        public bool NotFollowing(string followedId) =>
+            !AlreadyFollowing(followedId);
     }
 
     public class Account : Aggregate<AccountState, AccountId>
@@ -162,18 +204,35 @@ namespace Conduit.Api.Features.Accounts
         public void Register(string username, string email, string passwordHash)
         {
             if (State.AlreadyRegistered) return;
-            Apply(new Events.UserRegistered(Guid.NewGuid().ToString("N"), email, username, passwordHash));
+            Apply(
+                new Events.UserRegistered(
+                    Guid.NewGuid().ToString("N"),
+                    email,
+                    username,
+                    passwordHash));
         }
 
-        public void Update(string? email, string? username, string? password, string? bio, string? image)
+        public void Update(
+            string? email,
+            string? username,
+            string? password,
+            string? bio,
+            string? image)
         {
             EnsureExists();
-            if (email != null) Apply(new Events.EmailUpdated(State.Id, email));
-            if (username != null) Apply(new Events.UsernameUpdated(State.Id, username));
+            if (email != null)
+                Apply(new Events.EmailUpdated(State.Id, email));
+            if (username != null)
+                Apply(new Events.UsernameUpdated(State.Id, username));
             if (password != null)
-                Apply(new Events.PasswordUpdated(State.Id, BCrypt.Net.BCrypt.HashPassword(password)));
-            if (bio != null) Apply(new Events.BioUpdated(State.Id, bio));
-            if (image != null) Apply(new Events.ImageUpdated(State.Id, image));
+                Apply(
+                    new Events.PasswordUpdated(
+                        State.Id,
+                        BCrypt.Net.BCrypt.HashPassword(password)));
+            if (bio != null)
+                Apply(new Events.BioUpdated(State.Id, bio));
+            if (image != null)
+                Apply(new Events.ImageUpdated(State.Id, image));
         }
 
         public void Follow(string followedId)
@@ -196,7 +255,8 @@ namespace Conduit.Api.Features.Accounts
         private readonly IMongoCollection<Projections.UserDocument> _database;
 
         public UserRepository(IMongoDatabase database) =>
-            _database = database.GetCollection<Projections.UserDocument>("User");
+            _database =
+                database.GetCollection<Projections.UserDocument>("User");
 
         public async Task<Projections.UserDocument> GetUserByEmail(string email)
         {
@@ -204,13 +264,16 @@ namespace Conduit.Api.Features.Accounts
             return await query.SingleOrDefaultAsync();
         }
 
-        public async Task<Projections.UserDocument> GetUserByUsername(string username)
+        public async Task<Projections.UserDocument> GetUserByUsername(
+            string username)
         {
             var query = await _database.FindAsync(d => d.Username == username);
             return await query.SingleOrDefaultAsync();
         }
 
-        public async Task<bool> UsernameExists(string? username, User? user = null)
+        public async Task<bool> UsernameExists(
+            string? username,
+            User? user = null)
         {
             if (username == null) return false;
             var userByUsername = await GetUserByUsername(username);

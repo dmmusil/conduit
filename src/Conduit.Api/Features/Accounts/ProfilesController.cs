@@ -21,47 +21,63 @@ namespace Conduit.Api.Features.Accounts
         [HttpGet]
         public async Task<IActionResult> GetByUsername(string username)
         {
-            var profile = await _users.GetUserByUsername(username);
-            if (profile == null) return NotFound("Profile not found");
-
-            var caller = (User) HttpContext.Items["User"]!;
-            if (caller == null) return Ok(new Profile(profile.Username, profile.Bio, profile.Image, false));
-            
-            var callerProfile = await _users.GetUserByUuid(caller.Id);
-            var following = callerProfile.Following.Contains(profile.Id);
-            return Ok(new Profile(profile.Username, profile.Bio, profile.Image, following));
+            var caller = HttpContext.TryGetLoggedInUser();
+            var result = await _users.ProfileWithFollowingStatus(
+                username,
+                caller?.Id);
+            return result != null
+                ? Ok(result)
+                : NotFound("Profile does not exist");
         }
 
         [HttpPost("follow")]
         [Authorize]
         public async Task<IActionResult> Follow(string username)
         {
-            var follower = (User) HttpContext.Items["User"]!;
-            
+            var follower = HttpContext.GetLoggedInUser();
+
             var account = await _users.GetUserByUsername(username);
             if (account == null) return NotFound($"{username} does not exist.");
 
-            var command = new Commands.FollowUser(new AccountId(follower.Id), account.Id);
+            var command = new Commands.FollowUser(
+                new AccountId(follower.Id),
+                account.Id);
             await _svc.Handle(command);
 
-            return Ok(new Profile(account.Username, account.Bio, account.Image, true));
+            return Ok(
+                new Profile(
+                    account.Username,
+                    account.Bio,
+                    account.Image,
+                    true));
         }
-        
+
         [HttpDelete("follow")]
         [Authorize]
         public async Task<IActionResult> Unfollow(string username)
         {
-            var follower = (User) HttpContext.Items["User"]!;
-            
+            var follower = HttpContext.GetLoggedInUser();
+
             var account = await _users.GetUserByUsername(username);
             if (account == null) return NotFound($"{username} does not exist.");
 
-            var command = new Commands.UnfollowUser(new AccountId(follower.Id), account.Id);
+            var command = new Commands.UnfollowUser(
+                new AccountId(follower.Id),
+                account.Id);
             await _svc.Handle(command);
 
-            return Ok(new Profile(account.Username, account.Bio, account.Image, false));
+            return Ok(
+                new Profile(
+                    account.Username,
+                    account.Bio,
+                    account.Image,
+                    false));
         }
     }
 
-    public record Profile(string Username, string? Bio, string? Image, bool Following);
+    public record Profile(
+        string Username,
+        string? Bio,
+        string? Image,
+        bool Following);
 }

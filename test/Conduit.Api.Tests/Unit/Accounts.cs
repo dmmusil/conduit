@@ -11,12 +11,14 @@ namespace Conduit.Api.Tests.Unit
             var svc = Fixtures.UserService;
 
             var user = Fixtures.UserRegistration;
-            var result = await svc.Handle(new Features.Accounts.Commands.Register(user));
+            var result = await svc.Handle(
+                new Features.Accounts.Commands.Register(user));
 
             var actual = result.State;
             Assert.Equal(user.Email, actual.Email);
             Assert.Equal(user.Username, actual.Username);
-            Assert.True(BCrypt.Net.BCrypt.Verify(user.Password, actual.PasswordHash));
+            Assert.True(
+                BCrypt.Net.BCrypt.Verify(user.Password, actual.PasswordHash));
         }
     }
 }

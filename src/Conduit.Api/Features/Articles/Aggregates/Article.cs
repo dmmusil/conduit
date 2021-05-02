@@ -5,8 +5,7 @@ using Eventuous;
 
 namespace Conduit.Api.Features.Articles.Aggregates
 {
-    public record ArticleId(
-        string Value) : AggregateId(Value);
+    public record ArticleId(string Value) : AggregateId(Value);
 
     public class Article : Aggregate<ArticleState, ArticleId>
     {
@@ -19,9 +18,7 @@ namespace Conduit.Api.Features.Articles.Aggregates
             IEnumerable<string>? tags)
         {
             EnsureDoesntExist();
-            var articleId = new ArticleId(
-                Guid.NewGuid()
-                    .ToString("N"));
+            var articleId = new ArticleId(Guid.NewGuid().ToString("N"));
             Apply(
                 new ArticlePublished(
                     articleId,
@@ -40,8 +37,7 @@ namespace Conduit.Api.Features.Articles.Aggregates
 
     public record ArticleState : AggregateState<ArticleState, ArticleId>
     {
-        public override ArticleState When(
-            object @event) =>
+        public override ArticleState When(object @event) =>
             @event switch
             {
                 ArticlePublished(var articleId, var title, var titleSlug, var

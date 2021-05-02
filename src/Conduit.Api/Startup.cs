@@ -22,9 +22,10 @@ namespace Conduit.Api
         public void ConfigureServices(IServiceCollection services)
         {
             services
-                .AddSingleton(_ =>
-                    new EventStoreClient(
-                        EventStoreClientSettings.Create("esdb://admin:changeit@localhost:2113?tls=false")))
+                .AddSingleton(
+                    _ => new EventStoreClient(
+                        EventStoreClientSettings.Create(
+                            "esdb://admin:changeit@localhost:2113?tls=false")))
                 .AddSingleton<IEventStore, EsDbEventStore>()
                 .AddSingleton(DefaultEventSerializer.Instance)
                 .AddSingleton<AppSettings>()
@@ -36,26 +37,28 @@ namespace Conduit.Api
                 .AddControllers();
 
             Events.Register();
-            
-            const string connectionString = "mongodb://mongoadmin:secret@localhost:27017/?authSource=admin&readPreference=primary&ssl=false";
+
+            const string connectionString =
+                "mongodb://mongoadmin:secret@localhost:27017/?authSource=admin&readPreference=primary&ssl=false";
             services.AddSingleton(_ => new MongoClient(connectionString));
-            services.AddSingleton(o => o.GetService<MongoClient>()!.GetDatabase("Conduit"))
+            services.AddSingleton(
+                    o => o.GetService<MongoClient>()!.GetDatabase("Conduit"))
                 .AddSingleton<ICheckpointStore, MongoCheckpointStore>();
-            
-            services.AddSingleton(o => new ConduitSubscriber(
-                o.GetService<EventStoreClient>()!,
-                "Conduit",
-                o.GetService<ICheckpointStore>()!,
-                o.GetService<IEventSerializer>()!,
-                new IEventHandler[]
-                {
-                    new AccountsEventHandler(
-                        o.GetService<IMongoDatabase>()!, 
-                        "Conduit", 
-                        o.GetService<ILoggerFactory>()!)
-                },
-                o.GetService<ILoggerFactory>()!
-            ));
+
+            services.AddSingleton(
+                o => new ConduitSubscriber(
+                    o.GetService<EventStoreClient>()!,
+                    "Conduit",
+                    o.GetService<ICheckpointStore>()!,
+                    o.GetService<IEventSerializer>()!,
+                    new IEventHandler[]
+                    {
+                        new AccountsEventHandler(
+                            o.GetService<IMongoDatabase>()!,
+                            "Conduit",
+                            o.GetService<ILoggerFactory>()!)
+                    },
+                    o.GetService<ILoggerFactory>()!));
             services.AddHostedService(o => o.GetService<ConduitSubscriber>());
         }
 
@@ -68,10 +71,8 @@ namespace Conduit.Api
             }
 
             app.UseRouting();
-            app.UseCors(x => x
-                .AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader());
+            app.UseCors(
+                x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
             app.UseMiddleware<JwtMiddleware>();
 

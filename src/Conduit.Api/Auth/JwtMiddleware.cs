@@ -26,7 +26,10 @@ namespace Conduit.Api.Auth
 
         public async Task Invoke(HttpContext context, UserService userService)
         {
-            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+            var token = context.Request.Headers["Authorization"]
+                .FirstOrDefault()
+                ?.Split(" ")
+                .Last();
 
             if (token != null)
             {
@@ -36,20 +39,26 @@ namespace Conduit.Api.Auth
             await _next(context);
         }
 
-        private async Task AttachUserToContext(HttpContext context, UserService userService, string token)
+        private async Task AttachUserToContext(
+            HttpContext context,
+            UserService userService,
+            string token)
         {
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ClockSkew = TimeSpan.Zero
-                }, out SecurityToken validatedToken);
+                tokenHandler.ValidateToken(
+                    token,
+                    new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ClockSkew = TimeSpan.Zero
+                    },
+                    out SecurityToken validatedToken);
 
                 var jwtToken = (JwtSecurityToken) validatedToken;
                 var userId = jwtToken.Claims.First(x => x.Type == "id").Value;
