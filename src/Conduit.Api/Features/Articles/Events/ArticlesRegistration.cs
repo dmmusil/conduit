@@ -7,6 +7,9 @@ namespace Conduit.Api.Features.Articles.Events
         public static void Register()
         {
             TypeMap.AddType<ArticlePublished>("ArticlePublished");
+            TypeMap.AddType<BodyUpdated>("BodyUpdated");
+            TypeMap.AddType<TitleUpdated>("TitleUpdated");
+            TypeMap.AddType<DescriptionUpdated>("DescriptionUpdated");
         }
     }
 }

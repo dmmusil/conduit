@@ -46,6 +46,26 @@ namespace Conduit.Api.Tests.Integration
             await Unfollow(client, UniqueUsername);
 
             await PublishArticle(client);
+            await UpdateArticle(client);
+        }
+
+        private static async Task UpdateArticle(HttpClient client)
+        {
+            const string slug = "how-to-train-your-dragon";
+            var response = await SendCommand(
+                client,
+                new UpdateEnvelope(
+                    new UpdateArticle(
+                        null,
+                        "How not to train your dragon",
+                        "Lessons learned",
+                        "Don't play with fire.")),
+                $"/api/articles/{slug}",
+                method: HttpMethod.Put);
+            var envelope =
+                await response.Content.ReadFromJsonAsync<ArticleEnvelope>();
+            Assert.Equal("Don't play with fire.", envelope?.Article.Body);
+            Assert.NotNull(envelope!.Article.UpdatedAt);
         }
 
         private static async Task PublishArticle(HttpClient client)
@@ -69,7 +89,9 @@ namespace Conduit.Api.Tests.Integration
             const string expectedSlug = "how-to-train-your-dragon";
             Assert.Equal(expectedSlug, body?.Article.Slug);
 
-            response = await GetFromProjection(client, $"/api/articles/{expectedSlug}");
+            response = await GetFromProjection(
+                client,
+                $"/api/articles/{expectedSlug}");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             body = await response.Content.ReadFromJsonAsync<ArticleEnvelope>();
@@ -79,10 +101,12 @@ namespace Conduit.Api.Tests.Integration
                 body?.Article.Author.Username);
         }
 
-        private static async Task<HttpResponseMessage> GetFromProjection(HttpClient client, string route)
+        private static async Task<HttpResponseMessage> GetFromProjection(
+            HttpClient client,
+            string route)
         {
             var stopwatch = Stopwatch.StartNew();
-            
+
             while (stopwatch.ElapsedMilliseconds < 2000)
             {
                 var response = await client.GetAsync(route);
@@ -105,9 +129,10 @@ namespace Conduit.Api.Tests.Integration
             response = await GetFromProjection(
                 client,
                 $"/api/profiles/{usernameToFollow}");
-            var profile = await response.Content.ReadFromJsonAsync<Profile>();
+            var profile =
+                await response.Content.ReadFromJsonAsync<ProfileEnvelope>();
 
-            Assert.True(profile!.Following);
+            Assert.True(profile!.Profile.Following);
         }
 
         private static async Task Unfollow(
@@ -122,9 +147,10 @@ namespace Conduit.Api.Tests.Integration
             response = await GetFromProjection(
                 client,
                 $"/api/profiles/{usernameToUnfollow}");
-            var profile = await response.Content.ReadFromJsonAsync<Profile>();
+            var profile =
+                await response.Content.ReadFromJsonAsync<ProfileEnvelope>();
 
-            Assert.False(profile!.Following);
+            Assert.False(profile!.Profile.Following);
         }
 
         private static async Task GetProfile(HttpClient client)
@@ -132,9 +158,12 @@ namespace Conduit.Api.Tests.Integration
             var response = await GetFromProjection(
                 client,
                 $"/api/profiles/{Fixtures.UserRegistration.Username}");
-            var profile = await response.Content.ReadFromJsonAsync<Profile>();
+            var profile =
+                await response.Content.ReadFromJsonAsync<ProfileEnvelope>();
 
-            Assert.Equal(Fixtures.UserRegistration.Username, profile?.Username);
+            Assert.Equal(
+                Fixtures.UserRegistration.Username,
+                profile?.Profile.Username);
         }
 
         private static async Task AttemptUpdateDuplicate(

@@ -28,7 +28,7 @@ namespace Conduit.Api.Features.Accounts
                 username,
                 caller?.Id);
             return result != null
-                ? Ok(result)
+                ? Ok(new ProfileEnvelope(result))
                 : NotFound("Profile does not exist");
         }
 
@@ -47,11 +47,12 @@ namespace Conduit.Api.Features.Accounts
             await _svc.Handle(command);
 
             return Ok(
-                new Profile(
-                    account.Username,
-                    account.Bio,
-                    account.Image,
-                    true));
+                new ProfileEnvelope(
+                    new Profile(
+                        account.Username,
+                        account.Bio,
+                        account.Image,
+                        true)));
         }
 
         [HttpDelete("follow")]
@@ -69,11 +70,12 @@ namespace Conduit.Api.Features.Accounts
             await _svc.Handle(command);
 
             return Ok(
-                new Profile(
-                    account.Username,
-                    account.Bio,
-                    account.Image,
-                    false));
+                new ProfileEnvelope(
+                    new Profile(
+                        account.Username,
+                        account.Bio,
+                        account.Image,
+                        false)));
         }
     }
 
@@ -82,4 +84,6 @@ namespace Conduit.Api.Features.Accounts
         string? Bio,
         string? Image,
         bool Following);
+
+    public record ProfileEnvelope(Profile Profile);
 }

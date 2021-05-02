@@ -34,6 +34,19 @@ namespace Conduit.Api.Features.Articles.Projectors
                         .Set(d => d.AuthorImage, e.AuthorImage)
                         .Set(d => d.AuthorId, e.AuthorId)
                         .Set(d => d.PublishDate, e.PublishDate)),
+                TitleUpdated e => UpdateOperationTask(
+                    e.ArticleId,
+                    builder => builder.Set(d => d.Title, e.Title)
+                        .Set(d => d.TitleSlug, e.TitleSlug)
+                        .Set(d => d.UpdatedDate, e.UpdatedAt)),
+                BodyUpdated e => UpdateOperationTask(
+                    e.ArticleId,
+                    builder => builder.Set(d => d.Body, e.Body)
+                        .Set(d => d.UpdatedDate, e.UpdatedAt)),
+                DescriptionUpdated e => UpdateOperationTask(
+                    e.ArticleId,
+                    builder => builder.Set(d => d.Description, e.Description)
+                        .Set(d => d.UpdatedDate, e.UpdatedAt)),
                 _ => NoOp
             };
     }

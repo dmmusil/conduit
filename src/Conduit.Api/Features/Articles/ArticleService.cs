@@ -12,11 +12,17 @@ namespace Conduit.Api.Features.Articles
             OnNew<PublishArticle>(
                 (article, cmd) => article.Publish(
                     cmd.Title,
-                    cmd.Title.ToSlug(),
+                    cmd.TitleSlug,
                     cmd.Description,
                     cmd.Body,
                     cmd.Author,
                     cmd.Tags));
+            OnExisting<UpdateArticle>(
+                cmd => new ArticleId(cmd.ArticleId!),
+                (article, cmd) => article.Update(
+                    cmd.Title,
+                    cmd.Description,
+                    cmd.Body));
         }
     }
 }

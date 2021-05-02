@@ -33,6 +33,15 @@ namespace Conduit.Api.Features.Articles.Aggregates
                     DateTime.UtcNow,
                     tags));
         }
+
+        public void Update(string? title, string? description, string? body)
+        {
+            EnsureExists();
+            var updatedAt = DateTime.UtcNow;
+            if (title != null) Apply(new TitleUpdated(State.Id, title, title.ToSlug(), updatedAt));
+            if (description != null) Apply(new DescriptionUpdated(State.Id, description, updatedAt));
+            if (body != null) Apply(new BodyUpdated(State.Id, body, updatedAt));
+        }
     }
 
     public record ArticleState : AggregateState<ArticleState, ArticleId>
@@ -59,6 +68,19 @@ namespace Conduit.Api.Features.Articles.Aggregates
                         CreatedAt = publishDate,
                         Tags = tags
                     },
+                TitleUpdated(_, var title, var titleSlug, var updated) => this
+                    with
+                    {
+                        Title = title, Slug = titleSlug, UpdatedAt = updated
+                    },
+                BodyUpdated(_, var body, var updated) => this with
+                {
+                    Body = body, UpdatedAt = updated
+                },
+                DescriptionUpdated(_, var description, var updated) => this with
+                {
+                    Description = description, UpdatedAt = updated
+                },
                 _ => this
             };
 
