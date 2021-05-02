@@ -268,6 +268,12 @@ namespace Conduit.Api.Tests.Integration
                 command,
                 "/api/users/register");
             var user = await response.Content.ReadFromJsonAsync<User>();
+
+            await GetFromProjection(
+                client,
+                $"/api/profiles/{Fixtures.UserRegistration.Username}",
+                HttpStatusCode.OK);
+            
             return user!.Id;
         }
 
