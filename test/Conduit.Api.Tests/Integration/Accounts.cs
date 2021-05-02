@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Conduit.Api.Features.Accounts;
 using Conduit.Api.Features.Accounts.Commands;
+using Conduit.Api.Features.Articles;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
@@ -41,6 +42,29 @@ namespace Conduit.Api.Tests.Integration
 
             await Follow(client, UniqueUsername);
             await Unfollow(client, UniqueUsername);
+
+            await PublishArticle(client);
+        }
+
+        private async Task PublishArticle(HttpClient client)
+        {
+            var response = await SendCommand(
+                client,
+                new CreateEnvelope(
+                    new CreateArticle(
+                        "How to train your dragon",
+                        "Ever wonder how?",
+                        "You have to believe",
+                        new string[]
+                        {
+                            "reactjs", "angularjs", "dragons"
+                        })),
+                "/api/articles");
+
+            var body =
+                await response.Content.ReadFromJsonAsync<ArticleEnvelope>();
+            
+            Assert.Equal("how-to-train-your-dragon", body?.Article.Slug);
         }
 
         private static async Task Follow(

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Immutable;
+using Conduit.Api.Features.Accounts.Events;
 using Eventuous;
 
 namespace Conduit.Api.Features.Accounts.Aggregates
@@ -10,7 +11,7 @@ namespace Conduit.Api.Features.Accounts.Aggregates
         {
             if (State.AlreadyRegistered) return;
             Apply(
-                new Events.UserRegistered(
+                new UserRegistered(
                     Guid.NewGuid().ToString("N"),
                     email,
                     username,
@@ -26,32 +27,32 @@ namespace Conduit.Api.Features.Accounts.Aggregates
         {
             EnsureExists();
             if (email != null)
-                Apply(new Events.EmailUpdated(State.Id, email));
+                Apply(new EmailUpdated(State.Id, email));
             if (username != null)
-                Apply(new Events.UsernameUpdated(State.Id, username));
+                Apply(new UsernameUpdated(State.Id, username));
             if (password != null)
                 Apply(
-                    new Events.PasswordUpdated(
+                    new PasswordUpdated(
                         State.Id,
                         BCrypt.Net.BCrypt.HashPassword(password)));
             if (bio != null)
-                Apply(new Events.BioUpdated(State.Id, bio));
+                Apply(new BioUpdated(State.Id, bio));
             if (image != null)
-                Apply(new Events.ImageUpdated(State.Id, image));
+                Apply(new ImageUpdated(State.Id, image));
         }
 
         public void Follow(string followedId)
         {
             EnsureExists();
             if (State.AlreadyFollowing(followedId)) return;
-            Apply(new Events.AccountFollowed(State.Id, followedId));
+            Apply(new AccountFollowed(State.Id, followedId));
         }
 
         public void Unfollow(string followedId)
         {
             EnsureExists();
             if (State.NotFollowing(followedId)) return;
-            Apply(new Events.AccountUnfollowed(State.Id, followedId));
+            Apply(new AccountUnfollowed(State.Id, followedId));
         }
     }
 
@@ -63,7 +64,7 @@ namespace Conduit.Api.Features.Accounts.Aggregates
         {
             return @event switch
             {
-                Events.UserRegistered(var streamId, var email, var username, var
+                UserRegistered(var streamId, var email, var username, var
                     passwordHash) => this with
                     {
                         Id = new AccountId(streamId),
@@ -71,22 +72,22 @@ namespace Conduit.Api.Features.Accounts.Aggregates
                         Username = username,
                         PasswordHash = passwordHash
                     },
-                Events.EmailUpdated(_, var email) => this with {Email = email},
-                Events.UsernameUpdated(_, var username) => this with
+                EmailUpdated(_, var email) => this with {Email = email},
+                UsernameUpdated(_, var username) => this with
                 {
                     Username = username
                 },
-                Events.BioUpdated(_, var bio) => this with {Bio = bio},
-                Events.PasswordUpdated(_, var passwordHash) => this with
+                BioUpdated(_, var bio) => this with {Bio = bio},
+                PasswordUpdated(_, var passwordHash) => this with
                 {
                     PasswordHash = passwordHash
                 },
-                Events.ImageUpdated(_, var image) => this with {Image = image},
-                Events.AccountFollowed e => this with
+                ImageUpdated(_, var image) => this with {Image = image},
+                AccountFollowed e => this with
                 {
                     FollowedProfiles = FollowedProfiles.Add(e.FollowedId)
                 },
-                Events.AccountUnfollowed e => this with
+                AccountUnfollowed e => this with
                 {
                     FollowedProfiles = FollowedProfiles.Remove(e.UnfollowedId)
                 },

@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using Conduit.Api.Auth;
-using Conduit.Api.Features.Accounts;
 using Conduit.Api.Features.Accounts.Queries;
 using Conduit.Api.Features.Articles.Commands;
 using Microsoft.AspNetCore.Mvc;
@@ -20,12 +19,12 @@ namespace Conduit.Api.Features.Articles
 
         [HttpPost]
         public async Task<IActionResult> Create(
-            [FromBody] Requests.CreateArticle request)
+            [FromBody] CreateEnvelope envelope)
         {
             var user = HttpContext.GetLoggedInUser();
             var (authorId, _, username, _, bio, image, _) =
                 await _repo.GetUserByUuid(user.Id);
-            var (title, description, body, tags) = request;
+            var (title, description, body, tags) = envelope.Article;
             var cmd = new PublishArticle(
                 title,
                 description,
@@ -44,7 +43,7 @@ namespace Conduit.Api.Features.Articles
                 false,
                 a.FavoriteCount);
 
-            return Ok(response);
+            return Ok(new ArticleEnvelope(response));
         }
     }
 }

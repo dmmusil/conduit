@@ -3,6 +3,7 @@ using Conduit.Api.Features.Accounts;
 using Conduit.Api.Features.Accounts.Events;
 using Conduit.Api.Features.Accounts.Projectors;
 using Conduit.Api.Features.Accounts.Queries;
+using Conduit.Api.Features.Articles;
 using Conduit.Api.Features.Articles.Events;
 using Conduit.Api.Infrastructure;
 using EventStore.Client;
@@ -36,6 +37,7 @@ namespace Conduit.Api
                 .AddScoped<IAggregateStore, AggregateStore>()
                 .AddScoped<UserService>()
                 .AddScoped<UserRepository>()
+                .AddScoped<ArticleService>()
                 .AddScoped<JwtIssuer>()
                 .AddCors()
                 .AddControllers();
