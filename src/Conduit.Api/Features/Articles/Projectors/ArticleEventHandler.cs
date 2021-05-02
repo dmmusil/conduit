@@ -29,10 +29,10 @@ namespace Conduit.Api.Features.Articles.Projectors
                         .Set(d => d.Title, e.Title)
                         .Set(d => d.Body, e.Body)
                         .Set(d => d.Description, e.Description)
-                        .Set(d => d.AuthorBio, e.Description)
-                        .Set(d => d.AuthorUsername, e.Description)
-                        .Set(d => d.AuthorImage, e.Description)
-                        .Set(d => d.AuthorId, e.Description)
+                        .Set(d => d.AuthorBio, e.AuthorBio)
+                        .Set(d => d.AuthorUsername, e.AuthorUsername)
+                        .Set(d => d.AuthorImage, e.AuthorImage)
+                        .Set(d => d.AuthorId, e.AuthorId)
                         .Set(d => d.PublishDate, e.PublishDate)),
                 _ => NoOp
             };

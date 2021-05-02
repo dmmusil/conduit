@@ -1,23 +1,24 @@
 using System.Threading.Tasks;
+using Conduit.Api.Features.Accounts.Projections;
 using MongoDB.Driver;
 
 namespace Conduit.Api.Features.Accounts.Queries
 {
     public class UserRepository
     {
-        private readonly IMongoCollection<Projections.UserDocument> _database;
+        private readonly IMongoCollection<UserDocument> _database;
 
         public UserRepository(IMongoDatabase database) =>
             _database =
-                database.GetCollection<Projections.UserDocument>("User");
+                database.GetCollection<UserDocument>("User");
 
-        public async Task<Projections.UserDocument> GetUserByEmail(string email)
+        public async Task<UserDocument> GetUserByEmail(string email)
         {
             var query = await _database.FindAsync(d => d.Email == email);
             return await query.SingleOrDefaultAsync();
         }
 
-        public async Task<Projections.UserDocument> GetUserByUsername(
+        public async Task<UserDocument> GetUserByUsername(
             string username)
         {
             var query = await _database.FindAsync(d => d.Username == username);
@@ -40,7 +41,7 @@ namespace Conduit.Api.Features.Accounts.Queries
             return userWithEmail != null && userWithEmail.Id != user?.Id;
         }
 
-        public async Task<Projections.UserDocument> GetUserByUuid(string uuid)
+        public async Task<UserDocument> GetUserByUuid(string uuid)
         {
             var query = await _database.FindAsync(d => d.Id == uuid);
             return await query.SingleOrDefaultAsync();

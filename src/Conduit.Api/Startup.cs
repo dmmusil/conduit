@@ -5,6 +5,8 @@ using Conduit.Api.Features.Accounts.Projectors;
 using Conduit.Api.Features.Accounts.Queries;
 using Conduit.Api.Features.Articles;
 using Conduit.Api.Features.Articles.Events;
+using Conduit.Api.Features.Articles.Projectors;
+using Conduit.Api.Features.Articles.Queries;
 using Conduit.Api.Infrastructure;
 using EventStore.Client;
 using Eventuous;
@@ -37,6 +39,7 @@ namespace Conduit.Api
                 .AddScoped<IAggregateStore, AggregateStore>()
                 .AddScoped<UserService>()
                 .AddScoped<UserRepository>()
+                .AddScoped<ArticleRepository>()
                 .AddScoped<ArticleService>()
                 .AddScoped<JwtIssuer>()
                 .AddCors()
@@ -61,6 +64,10 @@ namespace Conduit.Api
                     new IEventHandler[]
                     {
                         new AccountsEventHandler(
+                            o.GetService<IMongoDatabase>()!,
+                            "Conduit",
+                            o.GetService<ILoggerFactory>()!),
+                        new ArticleEventHandler(
                             o.GetService<IMongoDatabase>()!,
                             "Conduit",
                             o.GetService<ILoggerFactory>()!)

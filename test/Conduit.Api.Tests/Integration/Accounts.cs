@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -46,7 +47,7 @@ namespace Conduit.Api.Tests.Integration
             await PublishArticle(client);
         }
 
-        private async Task PublishArticle(HttpClient client)
+        private static async Task PublishArticle(HttpClient client)
         {
             var response = await SendCommand(
                 client,
@@ -63,8 +64,18 @@ namespace Conduit.Api.Tests.Integration
 
             var body =
                 await response.Content.ReadFromJsonAsync<ArticleEnvelope>();
-            
-            Assert.Equal("how-to-train-your-dragon", body?.Article.Slug);
+
+            const string expectedSlug = "how-to-train-your-dragon";
+            Assert.Equal(expectedSlug, body?.Article.Slug);
+
+            response = await client.GetAsync($"/api/articles/{expectedSlug}");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            body = await response.Content.ReadFromJsonAsync<ArticleEnvelope>();
+
+            Assert.Equal(
+                Fixtures.UserRegistration.Username,
+                body?.Article.Author.Username);
         }
 
         private static async Task Follow(
@@ -127,9 +138,7 @@ namespace Conduit.Api.Tests.Integration
                 },
                 expectedResponseCode: HttpStatusCode.Conflict);
 
-            command = new UpdateUser(
-                null,
-                new UserUpdate(Email: UniqueEmail));
+            command = new UpdateUser(null, new UserUpdate(Email: UniqueEmail));
             await SendCommand(
                 client,
                 command,

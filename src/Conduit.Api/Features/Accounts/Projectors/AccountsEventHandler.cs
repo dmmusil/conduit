@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Conduit.Api.Features.Accounts.Projections;
 using Eventuous.Projections.MongoDB;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -6,7 +7,7 @@ using MongoDB.Driver;
 namespace Conduit.Api.Features.Accounts.Projectors
 {
     public class
-        AccountsEventHandler : MongoProjection<Projections.UserDocument>
+        AccountsEventHandler : MongoProjection<UserDocument>
     {
         public AccountsEventHandler(
             IMongoDatabase database,
@@ -18,7 +19,7 @@ namespace Conduit.Api.Features.Accounts.Projectors
         {
         }
 
-        protected override ValueTask<Operation<Projections.UserDocument>>
+        protected override ValueTask<Operation<UserDocument>>
             GetUpdate(object evt)
         {
             return evt switch
