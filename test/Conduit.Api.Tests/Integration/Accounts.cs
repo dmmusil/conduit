@@ -102,8 +102,9 @@ namespace Conduit.Api.Tests.Integration
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            response =
-                await client.GetAsync($"/api/profiles/{usernameToFollow}");
+            response = await GetFromProjection(
+                client,
+                $"/api/profiles/{usernameToFollow}");
             var profile = await response.Content.ReadFromJsonAsync<Profile>();
 
             Assert.True(profile!.Following);
@@ -118,8 +119,9 @@ namespace Conduit.Api.Tests.Integration
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            response =
-                await client.GetAsync($"/api/profiles/{usernameToUnfollow}");
+            response = await GetFromProjection(
+                client,
+                $"/api/profiles/{usernameToUnfollow}");
             var profile = await response.Content.ReadFromJsonAsync<Profile>();
 
             Assert.False(profile!.Following);
@@ -127,7 +129,8 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task GetProfile(HttpClient client)
         {
-            var response = await client.GetAsync(
+            var response = await GetFromProjection(
+                client,
                 $"/api/profiles/{Fixtures.UserRegistration.Username}");
             var profile = await response.Content.ReadFromJsonAsync<Profile>();
 
