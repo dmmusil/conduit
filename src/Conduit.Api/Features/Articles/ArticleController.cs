@@ -100,6 +100,20 @@ namespace Conduit.Api.Features.Articles
             return Ok(StateToArticleResponse(state));
         }
 
+        [HttpDelete("{slug}")]
+        public async Task<IActionResult> Delete(string slug)
+        {
+            var article = await _articleRepository.GetArticleBySlug(slug);
+            if (article == null) return NotFound();
+
+            if (article.AuthorId != HttpContext.GetLoggedInUser().Id)
+                return Forbid();
+
+            var cmd = new DeleteArticle(article.Id);
+            await _svc.Handle(cmd);
+            return NoContent();
+        }
+
         private async Task<bool> CheckDuplicateSlug(
             UpdateEnvelope update,
             ArticleDocument article)
@@ -125,10 +139,4 @@ namespace Conduit.Api.Features.Articles
     }
 
     public record UpdateEnvelope(UpdateArticle Article);
-
-    public record UpdateArticle(
-        string? ArticleId,
-        string? Title,
-        string? Description,
-        string? Body);
 }

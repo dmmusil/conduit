@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Conduit.Api.Features.Accounts;
 using Conduit.Api.Features.Accounts.Commands;
 using Conduit.Api.Features.Articles;
+using Conduit.Api.Features.Articles.Commands;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
@@ -47,7 +48,22 @@ namespace Conduit.Api.Tests.Integration
 
             await PublishArticle(client);
             await UpdateArticle(client);
+            await DeleteArticle(client);
         }
+
+        private static async Task DeleteArticle(HttpClient client)
+        {
+            const string slug = "how-not-to-train-your-dragon";
+            var response = await client.DeleteAsync($"/api/articles/{slug}");
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+            response = await GetFromProjection(
+                client,
+                $"/api/articles/{slug}",
+                HttpStatusCode.NotFound);
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
 
         private static async Task UpdateArticle(HttpClient client)
         {
@@ -91,7 +107,8 @@ namespace Conduit.Api.Tests.Integration
 
             response = await GetFromProjection(
                 client,
-                $"/api/articles/{expectedSlug}");
+                $"/api/articles/{expectedSlug}",
+                HttpStatusCode.OK);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             body = await response.Content.ReadFromJsonAsync<ArticleEnvelope>();
@@ -103,14 +120,16 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task<HttpResponseMessage> GetFromProjection(
             HttpClient client,
-            string route)
+            string route,
+            HttpStatusCode expectedStatusCode)
         {
             var stopwatch = Stopwatch.StartNew();
 
             while (stopwatch.ElapsedMilliseconds < 2000)
             {
                 var response = await client.GetAsync(route);
-                if (response.IsSuccessStatusCode) return response;
+
+                if (response.StatusCode == expectedStatusCode) return response;
             }
 
             throw new Exception("Projection didn't run within 2 seconds.");
@@ -128,7 +147,8 @@ namespace Conduit.Api.Tests.Integration
 
             response = await GetFromProjection(
                 client,
-                $"/api/profiles/{usernameToFollow}");
+                $"/api/profiles/{usernameToFollow}",
+                HttpStatusCode.OK);
             var profile =
                 await response.Content.ReadFromJsonAsync<ProfileEnvelope>();
 
@@ -146,7 +166,8 @@ namespace Conduit.Api.Tests.Integration
 
             response = await GetFromProjection(
                 client,
-                $"/api/profiles/{usernameToUnfollow}");
+                $"/api/profiles/{usernameToUnfollow}",
+                HttpStatusCode.OK);
             var profile =
                 await response.Content.ReadFromJsonAsync<ProfileEnvelope>();
 
@@ -157,7 +178,8 @@ namespace Conduit.Api.Tests.Integration
         {
             var response = await GetFromProjection(
                 client,
-                $"/api/profiles/{Fixtures.UserRegistration.Username}");
+                $"/api/profiles/{Fixtures.UserRegistration.Username}",
+                HttpStatusCode.OK);
             var profile =
                 await response.Content.ReadFromJsonAsync<ProfileEnvelope>();
 

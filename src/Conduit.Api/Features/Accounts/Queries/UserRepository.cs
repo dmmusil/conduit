@@ -9,8 +9,7 @@ namespace Conduit.Api.Features.Accounts.Queries
         private readonly IMongoCollection<UserDocument> _database;
 
         public UserRepository(IMongoDatabase database) =>
-            _database =
-                database.GetCollection<UserDocument>("User");
+            _database = database.GetCollection<UserDocument>("User");
 
         public async Task<UserDocument> GetUserByEmail(string email)
         {
@@ -18,8 +17,7 @@ namespace Conduit.Api.Features.Accounts.Queries
             return await query.SingleOrDefaultAsync();
         }
 
-        public async Task<UserDocument> GetUserByUsername(
-            string username)
+        public async Task<UserDocument> GetUserByUsername(string username)
         {
             var query = await _database.FindAsync(d => d.Username == username);
             return await query.SingleOrDefaultAsync();

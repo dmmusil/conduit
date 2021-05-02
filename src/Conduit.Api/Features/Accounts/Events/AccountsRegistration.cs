@@ -2,8 +2,8 @@ using Eventuous;
 
 namespace Conduit.Api.Features.Accounts.Events
 {
-    public static class AccountsRegistration{
-            
+    public static class AccountsRegistration
+    {
         public static void Register()
         {
             TypeMap.AddType<UserRegistered>(nameof(UserRegistered));

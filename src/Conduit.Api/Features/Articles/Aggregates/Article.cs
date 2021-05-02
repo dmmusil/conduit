@@ -38,9 +38,21 @@ namespace Conduit.Api.Features.Articles.Aggregates
         {
             EnsureExists();
             var updatedAt = DateTime.UtcNow;
-            if (title != null) Apply(new TitleUpdated(State.Id, title, title.ToSlug(), updatedAt));
-            if (description != null) Apply(new DescriptionUpdated(State.Id, description, updatedAt));
+            if (title != null)
+                Apply(
+                    new TitleUpdated(
+                        State.Id,
+                        title,
+                        title.ToSlug(),
+                        updatedAt));
+            if (description != null)
+                Apply(new DescriptionUpdated(State.Id, description, updatedAt));
             if (body != null) Apply(new BodyUpdated(State.Id, body, updatedAt));
+        }
+
+        public void Delete()
+        {
+            Apply(new ArticleDeleted(State.Id));
         }
     }
 

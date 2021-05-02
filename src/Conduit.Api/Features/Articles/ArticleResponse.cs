@@ -3,7 +3,7 @@ using System;
 namespace Conduit.Api.Features.Articles
 {
     public record ArticleEnvelope(ArticleResponse Article);
-    
+
     public record ArticleResponse(
         string Title,
         string Slug,

@@ -23,6 +23,9 @@ namespace Conduit.Api.Features.Articles
                     cmd.Title,
                     cmd.Description,
                     cmd.Body));
+            OnExisting<DeleteArticle>(
+                cmd => new ArticleId(cmd.ArticleId),
+                (article, cmd) => article.Delete());
         }
     }
 }

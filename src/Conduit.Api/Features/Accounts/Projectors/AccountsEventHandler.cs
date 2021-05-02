@@ -6,8 +6,7 @@ using MongoDB.Driver;
 
 namespace Conduit.Api.Features.Accounts.Projectors
 {
-    public class
-        AccountsEventHandler : MongoProjection<UserDocument>
+    public class AccountsEventHandler : MongoProjection<UserDocument>
     {
         public AccountsEventHandler(
             IMongoDatabase database,
@@ -19,8 +18,8 @@ namespace Conduit.Api.Features.Accounts.Projectors
         {
         }
 
-        protected override ValueTask<Operation<UserDocument>>
-            GetUpdate(object evt)
+        protected override ValueTask<Operation<UserDocument>> GetUpdate(
+            object evt)
         {
             return evt switch
             {
