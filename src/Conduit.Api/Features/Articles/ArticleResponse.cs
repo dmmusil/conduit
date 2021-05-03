@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Conduit.Api.Features.Articles
 {
@@ -13,5 +14,6 @@ namespace Conduit.Api.Features.Articles
         DateTime CreatedAt,
         DateTime? UpdatedAt,
         bool Favorited,
-        int FavoritesCount);
+        int FavoritesCount,
+        IEnumerable<string> TagList);
 }

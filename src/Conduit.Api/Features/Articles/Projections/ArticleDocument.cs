@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Eventuous.Projections.MongoDB.Tools;
 
 namespace Conduit.Api.Features.Articles.Projections
@@ -14,5 +15,6 @@ namespace Conduit.Api.Features.Articles.Projections
         string AuthorBio,
         string AuthorImage,
         DateTime PublishDate,
-        DateTime? UpdatedDate) : ProjectedDocument(ArticleId);
+        DateTime? UpdatedDate,
+        IEnumerable<string> TagList) : ProjectedDocument(ArticleId);
 }

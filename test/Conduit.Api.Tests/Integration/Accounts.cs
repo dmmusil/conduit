@@ -230,8 +230,8 @@ namespace Conduit.Api.Tests.Integration
             var response = await SendCommand(
                 client,
                 command,
-                "/api/users/register");
-            await response.Content.ReadFromJsonAsync<User>();
+                "/api/users");
+            await response.Content.ReadFromJsonAsync<UserEnvelope>();
         }
 
         private static async Task AttemptRegisterDuplicate(HttpClient client)
@@ -240,7 +240,7 @@ namespace Conduit.Api.Tests.Integration
             await SendCommand(
                 client,
                 command,
-                "/api/users/register",
+                "/api/users",
                 HttpStatusCode.Conflict);
         }
 
@@ -266,15 +266,15 @@ namespace Conduit.Api.Tests.Integration
             var response = await SendCommand(
                 client,
                 command,
-                "/api/users/register");
-            var user = await response.Content.ReadFromJsonAsync<User>();
+                "/api/users");
+            var user = await response.Content.ReadFromJsonAsync<UserEnvelope>();
 
             await GetFromProjection(
                 client,
                 $"/api/profiles/{Fixtures.UserRegistration.Username}",
                 HttpStatusCode.OK);
             
-            return user!.Id;
+            return user!.User.Id;
         }
 
         private static async Task<string?> Login(HttpClient client, string id)
@@ -284,8 +284,8 @@ namespace Conduit.Api.Tests.Integration
                 client,
                 command,
                 "/api/users/login");
-            var user = await response.Content.ReadFromJsonAsync<User>();
-            return user?.Token;
+            var user = await response.Content.ReadFromJsonAsync<UserEnvelope>();
+            return user?.User.Token;
         }
 
         private static async Task Verify(HttpClient client, string? token)
@@ -294,10 +294,10 @@ namespace Conduit.Api.Tests.Integration
                 "Authorization",
                 $"Bearer {token}");
             var response = await client.GetAsync("/api/user");
-            var user = await response.Content.ReadFromJsonAsync<User>();
+            var user = await response.Content.ReadFromJsonAsync<UserEnvelope>();
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Equal("jake", user?.Username);
+            Assert.Equal("jake", user?.User.Username);
         }
 
         private static async Task<HttpResponseMessage> SendCommand(

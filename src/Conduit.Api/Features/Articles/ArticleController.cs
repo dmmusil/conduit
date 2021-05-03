@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts.Queries;
@@ -11,7 +12,6 @@ namespace Conduit.Api.Features.Articles
 {
     [ApiController]
     [Route("api/articles")]
-    [Authorize]
     public class ArticleController : ControllerBase
     {
         private readonly UserRepository _userRepository;
@@ -25,7 +25,34 @@ namespace Conduit.Api.Features.Articles
             (_userRepository, _svc, _articleRepository) =
             (userRepository, svc, articleRepository);
 
+        [HttpGet, HttpGet("feed")]
+        public IActionResult GetAll() =>
+            Ok(
+                new
+                {
+                    Articles = new[]
+                    {
+                        new ArticleResponse(
+                            "Title",
+                            "title",
+                            "Desc",
+                            "Body",
+                            new Author(
+                                "abc",
+                                "jake",
+                                "I work at state farm",
+                                null,
+                                false),
+                            DateTime.UtcNow,
+                            null,
+                            false,
+                            0,
+                            new[] {"state farm"})
+                    }
+                });
+
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Create(
             [FromBody] CreateEnvelope envelope)
         {
@@ -74,11 +101,13 @@ namespace Conduit.Api.Features.Articles
                 article.PublishDate,
                 article.UpdatedDate,
                 false,
-                0);
+                0,
+                article.TagList);
             return Ok(new ArticleEnvelope(response));
         }
 
         [HttpPut("{slug}")]
+        [Authorize]
         public async Task<IActionResult> UpdateArticle(
             [FromBody] UpdateEnvelope update,
             string slug)
@@ -101,6 +130,7 @@ namespace Conduit.Api.Features.Articles
         }
 
         [HttpDelete("{slug}")]
+        [Authorize]
         public async Task<IActionResult> Delete(string slug)
         {
             var article = await _articleRepository.GetArticleBySlug(slug);
@@ -135,7 +165,8 @@ namespace Conduit.Api.Features.Articles
                 a.CreatedAt,
                 a.UpdatedAt,
                 false,
-                a.FavoriteCount));
+                a.FavoriteCount,
+                a.Tags ?? Array.Empty<string>()));
     }
 
     public record UpdateEnvelope(UpdateArticle Article);

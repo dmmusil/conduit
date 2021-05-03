@@ -19,7 +19,7 @@ namespace Conduit.Api.Features.Accounts
         [Authorize]
         public ActionResult GetCurrentUser()
         {
-            return Ok(HttpContext.GetLoggedInUser());
+            return Ok(new UserEnvelope(HttpContext.GetLoggedInUser()));
         }
 
         [HttpPut]
@@ -37,13 +37,14 @@ namespace Conduit.Api.Features.Accounts
             update = update with {StreamId = user.Id};
             var (state, _) = await _svc.Handle(update);
             return Ok(
-                new User(
-                    state.Id,
-                    state.Email,
-                    state.Username,
-                    state.Bio,
-                    state.Image,
-                    token));
+                new UserEnvelope(
+                    new User(
+                        state.Id,
+                        state.Email,
+                        state.Username,
+                        state.Bio,
+                        state.Image,
+                        token)));
         }
     }
 }
