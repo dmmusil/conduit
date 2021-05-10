@@ -55,6 +55,12 @@ namespace Conduit.Api.Features.Articles.Projectors
                     new OtherOperation<ArticleDocument>(
                         _database
                             .DeleteDocument<ArticleDocument>(e.ArticleId))),
+                ArticleFavorited e => UpdateOperationTask(
+                    e.ArticleId,
+                    builder => builder.Inc(d => d.FavoriteCount, 1)),
+                ArticleUnfavorited e => UpdateOperationTask(
+                    e.ArticleId,
+                    builder => builder.Inc(d => d.FavoriteCount, -1)),
                 _ => NoOp
             };
     }

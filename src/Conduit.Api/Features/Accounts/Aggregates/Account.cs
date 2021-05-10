@@ -89,7 +89,8 @@ namespace Conduit.Api.Features.Accounts.Aggregates
                 },
                 AccountUnfollowed e => this with
                 {
-                    FollowedProfiles = FollowedProfiles.Remove(e.UnfollowedId)
+                    FollowedProfiles =
+                    FollowedProfiles.Remove(e.UnfollowedId)
                 },
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(@event),

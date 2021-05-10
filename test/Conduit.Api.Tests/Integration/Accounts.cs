@@ -47,9 +47,40 @@ namespace Conduit.Api.Tests.Integration
             await Unfollow(client, UniqueUsername);
 
             await PublishArticle(client);
+            await FavoriteArticle(client);
+            await UnfavoriteArticle(client);
             await UpdateArticle(client);
             await DeleteArticle(client);
         }
+
+        private static async Task FavoriteArticle(HttpClient client) =>
+            await ManageFavorites(client, HttpMethod.Post);
+
+        private static async Task ManageFavorites(
+            HttpClient client,
+            HttpMethod method)
+        {
+            const string slug = "how-to-train-your-dragon";
+
+            if (method == HttpMethod.Post)
+                await client.PostAsync(
+                    $"/api/articles/{slug}/favorite",
+                    new StringContent(""));
+            else
+                await client.DeleteAsync($"/api/articles/{slug}/favorite");
+
+            var expectedFavoriteCount = method == HttpMethod.Post ? 1 : 0;
+
+            await GetFromProjection<ArticleEnvelope>(
+                client,
+                $"/api/articles/{slug}",
+                HttpStatusCode.OK,
+                article => article.Article.FavoritesCount ==
+                           expectedFavoriteCount);
+        }
+
+        private static async Task UnfavoriteArticle(HttpClient client) =>
+            await ManageFavorites(client, HttpMethod.Delete);
 
         private static async Task DeleteArticle(HttpClient client)
         {
@@ -68,7 +99,6 @@ namespace Conduit.Api.Tests.Integration
                 $"/api/articles/{slug}",
                 HttpStatusCode.NotFound);
         }
-
 
         private static async Task UpdateArticle(HttpClient client)
         {
@@ -120,6 +150,33 @@ namespace Conduit.Api.Tests.Integration
                 body?.Article.Author.Username);
         }
 
+        private static async Task GetFromProjection<T>(
+            HttpClient client,
+            string route,
+            HttpStatusCode expectedStatusCode,
+            Func<T, bool> test)
+        {
+            var stopwatch = Stopwatch.StartNew();
+
+            var t = default(T);
+            HttpResponseMessage response = null!;
+            while (stopwatch.ElapsedMilliseconds < 2000)
+            {
+                response = await client.GetAsync(route);
+
+                if (response.StatusCode != expectedStatusCode) continue;
+                t = await response.Content.ReadFromJsonAsync<T>();
+                if (test(t!))
+                {
+                    return;
+                }
+            }
+
+            throw new Exception(
+                $"Projection didn't run within 2 seconds. Response code: {response.StatusCode} Body: {t}");
+        }
+
+
         private static async Task<HttpResponseMessage> GetFromProjection(
             HttpClient client,
             string route,
@@ -147,14 +204,11 @@ namespace Conduit.Api.Tests.Integration
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            response = await GetFromProjection(
+            await GetFromProjection<ProfileEnvelope>(
                 client,
                 $"/api/profiles/{usernameToFollow}",
-                HttpStatusCode.OK);
-            var profile =
-                await response.Content.ReadFromJsonAsync<ProfileEnvelope>();
-
-            Assert.True(profile!.Profile.Following);
+                HttpStatusCode.OK,
+                profile => profile.Profile.Following);
         }
 
         private static async Task Unfollow(
@@ -166,14 +220,11 @@ namespace Conduit.Api.Tests.Integration
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-            response = await GetFromProjection(
+            await GetFromProjection<ProfileEnvelope>(
                 client,
                 $"/api/profiles/{usernameToUnfollow}",
-                HttpStatusCode.OK);
-            var profile =
-                await response.Content.ReadFromJsonAsync<ProfileEnvelope>();
-
-            Assert.False(profile!.Profile.Following);
+                HttpStatusCode.OK,
+                profile => profile.Profile.Following == false);
         }
 
         private static async Task GetProfile(HttpClient client)

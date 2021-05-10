@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using Conduit.Api.Features.Articles.Events;
 using Eventuous;
 
@@ -50,9 +51,18 @@ namespace Conduit.Api.Features.Articles.Aggregates
             if (body != null) Apply(new BodyUpdated(State.Id, body, updatedAt));
         }
 
-        public void Delete()
+        public void Delete() => Apply(new ArticleDeleted(State.Id));
+
+        public void Favorite(string accountId)
         {
-            Apply(new ArticleDeleted(State.Id));
+            if (!State.FavoritedBy(accountId))
+                Apply(new ArticleFavorited(State.Id, accountId));
+        }
+
+        public void Unfavorite(string accountId)
+        {
+            if (State.FavoritedBy(accountId))
+                Apply(new ArticleUnfavorited(State.Id, accountId));
         }
     }
 
@@ -93,6 +103,14 @@ namespace Conduit.Api.Features.Articles.Aggregates
                 {
                     Description = description, UpdatedAt = updated
                 },
+                ArticleFavorited e => this with
+                {
+                    _favoritedBy = _favoritedBy.Add(e.AccountId)
+                },
+                ArticleUnfavorited e => this with
+                {
+                    _favoritedBy = _favoritedBy.Remove(e.AccountId)
+                },
                 _ => this
             };
 
@@ -104,6 +122,12 @@ namespace Conduit.Api.Features.Articles.Aggregates
         public string Description { get; private init; } = null!;
         public string Slug { get; private init; } = null!;
         public string Title { get; private init; } = null!;
-        public int FavoriteCount { get; init; }
+        public int FavoriteCount => _favoritedBy.Count;
+
+        private ImmutableHashSet<string> _favoritedBy =
+            ImmutableHashSet<string>.Empty;
+
+        public bool FavoritedBy(string accountId) =>
+            _favoritedBy.Contains(accountId);
     }
 }

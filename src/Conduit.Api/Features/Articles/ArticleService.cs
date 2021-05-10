@@ -26,6 +26,12 @@ namespace Conduit.Api.Features.Articles
             OnExisting<DeleteArticle>(
                 cmd => new ArticleId(cmd.ArticleId),
                 (article, cmd) => article.Delete());
+            OnExisting<FavoriteArticle>(
+                cmd => new ArticleId(cmd.ArticleId),
+                (article, cmd) => article.Favorite(cmd.UserId));
+            OnExisting<UnfavoriteArticle>(
+                cmd => new ArticleId(cmd.ArticleId),
+                (article, cmd) => article.Unfavorite(cmd.UserId));
         }
     }
 }

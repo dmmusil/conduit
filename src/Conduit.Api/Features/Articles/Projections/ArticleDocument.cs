@@ -16,5 +16,6 @@ namespace Conduit.Api.Features.Articles.Projections
         string AuthorImage,
         DateTime PublishDate,
         DateTime? UpdatedDate,
+        int FavoriteCount,
         IEnumerable<string> TagList) : ProjectedDocument(ArticleId);
 }

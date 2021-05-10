@@ -78,31 +78,31 @@ namespace Conduit.Api.Features.Articles
                     false),
                 tags);
             var (state, _) = await _svc.Handle(cmd);
-            return Ok(StateToArticleResponse(state));
+            return Ok(StateToArticleResponse(state, false));
         }
 
         [HttpGet("{slug}")]
         public async Task<IActionResult> GetBySlug(string slug)
         {
-            var article = await _articleRepository.GetArticleBySlug(slug);
-            if (article == null) return NotFound();
+            var a = await _articleRepository.GetArticleBySlug(slug);
+            if (a == null) return NotFound();
 
             var response = new ArticleResponse(
-                article.Title,
-                article.TitleSlug,
-                article.Description,
-                article.Body,
+                a.Title,
+                a.TitleSlug,
+                a.Description,
+                a.Body,
                 new Author(
-                    article.AuthorId,
-                    article.AuthorUsername,
-                    article.AuthorBio,
-                    article.AuthorImage,
+                    a.AuthorId,
+                    a.AuthorUsername,
+                    a.AuthorBio,
+                    a.AuthorImage,
                     false),
-                article.PublishDate,
-                article.UpdatedDate,
+                a.PublishDate,
+                a.UpdatedDate,
                 false,
-                0,
-                article.TagList);
+                a.FavoriteCount,
+                a.TagList);
             return Ok(new ArticleEnvelope(response));
         }
 
@@ -126,7 +126,7 @@ namespace Conduit.Api.Features.Articles
                 Article = update.Article with {ArticleId = article.Id}
             };
             var (state, _) = await _svc.Handle(update.Article);
-            return Ok(StateToArticleResponse(state));
+            return Ok(StateToArticleResponse(state, false));
         }
 
         [HttpDelete("{slug}")]
@@ -144,6 +144,28 @@ namespace Conduit.Api.Features.Articles
             return NoContent();
         }
 
+        [HttpPost("{slug}/favorite")]
+        [Authorize]
+        public async Task<IActionResult> FavoriteArticle(string slug)
+        {
+            var user = HttpContext.GetLoggedInUser();
+            var article = await _articleRepository.GetArticleBySlug(slug);
+            var favorite = new FavoriteArticle(article.Id, user.Id);
+            var (state, _) = await _svc.Handle(favorite);
+            return Ok(StateToArticleResponse(state, false));
+        }
+
+        [HttpDelete("{slug}/favorite")]
+        [Authorize]
+        public async Task<IActionResult> UnfavoriteArticle(string slug)
+        {
+            var user = HttpContext.GetLoggedInUser();
+            var article = await _articleRepository.GetArticleBySlug(slug);
+            var unfavorite = new UnfavoriteArticle(article.Id, user.Id);
+            var (state, _) = await _svc.Handle(unfavorite);
+            return Ok(StateToArticleResponse(state, false));
+        }
+
         private async Task<bool> CheckDuplicateSlug(
             UpdateEnvelope update,
             ArticleDocument article)
@@ -155,7 +177,8 @@ namespace Conduit.Api.Features.Articles
             return existingSlug != null && existingSlug.Id != article.Id;
         }
 
-        private static ArticleEnvelope StateToArticleResponse(ArticleState a) =>
+        private static ArticleEnvelope
+            StateToArticleResponse(ArticleState a, bool favorite) =>
             new(new ArticleResponse(
                 a.Title,
                 a.Slug,
@@ -164,10 +187,11 @@ namespace Conduit.Api.Features.Articles
                 a.Author,
                 a.CreatedAt,
                 a.UpdatedAt,
-                false,
+                favorite,
                 a.FavoriteCount,
                 a.Tags ?? Array.Empty<string>()));
     }
+
 
     public record UpdateEnvelope(UpdateArticle Article);
 }

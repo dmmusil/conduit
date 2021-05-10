@@ -8,6 +8,5 @@ namespace Conduit.Api.Features.Articles
     {
         [HttpGet]
         public IActionResult Get() => Ok(new {Tags = new[] {"c#", "react"}});
-
     }
 }
