@@ -54,14 +54,19 @@ namespace Conduit.Api.Tests.Integration
         private static async Task DeleteArticle(HttpClient client)
         {
             const string slug = "how-not-to-train-your-dragon";
+
+            await GetFromProjection(
+                client,
+                $"/api/articles/{slug}",
+                HttpStatusCode.OK);
+
             var response = await client.DeleteAsync($"/api/articles/{slug}");
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
-            response = await GetFromProjection(
+            await GetFromProjection(
                 client,
                 $"/api/articles/{slug}",
                 HttpStatusCode.NotFound);
-            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
 
 
@@ -93,10 +98,7 @@ namespace Conduit.Api.Tests.Integration
                         "How to train your dragon",
                         "Ever wonder how?",
                         "You have to believe",
-                        new[]
-                        {
-                            "reactjs", "angularjs", "dragons"
-                        })),
+                        new[] {"reactjs", "angularjs", "dragons"})),
                 "/api/articles");
 
             var body =
@@ -224,13 +226,9 @@ namespace Conduit.Api.Tests.Integration
             var command = new Register(
                 Fixtures.UserRegistration with
                 {
-                    Email = UniqueEmail,
-                    Username = UniqueUsername
+                    Email = UniqueEmail, Username = UniqueUsername
                 });
-            var response = await SendCommand(
-                client,
-                command,
-                "/api/users");
+            var response = await SendCommand(client, command, "/api/users");
             await response.Content.ReadFromJsonAsync<UserEnvelope>();
         }
 
@@ -263,17 +261,14 @@ namespace Conduit.Api.Tests.Integration
         private static async Task<string> Register(HttpClient client)
         {
             var command = new Register(Fixtures.UserRegistration);
-            var response = await SendCommand(
-                client,
-                command,
-                "/api/users");
+            var response = await SendCommand(client, command, "/api/users");
             var user = await response.Content.ReadFromJsonAsync<UserEnvelope>();
 
             await GetFromProjection(
                 client,
                 $"/api/profiles/{Fixtures.UserRegistration.Username}",
                 HttpStatusCode.OK);
-            
+
             return user!.User.Id;
         }
 
