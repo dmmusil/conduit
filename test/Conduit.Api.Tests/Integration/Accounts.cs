@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -50,7 +51,16 @@ namespace Conduit.Api.Tests.Integration
             await FavoriteArticle(client);
             await UnfavoriteArticle(client);
             await UpdateArticle(client);
+            await GetTags(client, 3);
             await DeleteArticle(client);
+            await GetTags(client, 0);
+        }
+
+        private async Task GetTags(HttpClient client, int expectedCount)
+        {
+            var response = await client.GetAsync("/api/tags");
+            var tags = await response.Content.ReadFromJsonAsync<TagsEnvelope>();
+            Assert.Equal(expectedCount, tags!.Tags.Count());
         }
 
         private static async Task FavoriteArticle(HttpClient client) =>

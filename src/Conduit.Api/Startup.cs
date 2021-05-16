@@ -70,7 +70,12 @@ namespace Conduit.Api
                         new ArticleEventHandler(
                             o.GetService<IMongoDatabase>()!,
                             "Conduit",
+                            o.GetService<ILoggerFactory>()!),
+                        new TagsEventHandler(
+                            o.GetService<IMongoDatabase>()!,
+                            "Conduit",
                             o.GetService<ILoggerFactory>()!)
+
                     },
                     o.GetService<ILoggerFactory>()!));
             services.AddHostedService(o => o.GetService<ConduitSubscriber>());

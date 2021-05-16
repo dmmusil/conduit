@@ -48,10 +48,11 @@ namespace Conduit.Api.Features.Articles.Aggregates
                         updatedAt));
             if (description != null)
                 Apply(new DescriptionUpdated(State.Id, description, updatedAt));
-            if (body != null) Apply(new BodyUpdated(State.Id, body, updatedAt));
+            if (body != null)
+                Apply(new BodyUpdated(State.Id, body, updatedAt));
         }
 
-        public void Delete() => Apply(new ArticleDeleted(State.Id));
+        public void Delete() => Apply(new ArticleDeleted(State.Id, State.Tags));
 
         public void Favorite(string accountId)
         {
