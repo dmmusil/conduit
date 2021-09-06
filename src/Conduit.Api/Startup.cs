@@ -13,6 +13,7 @@ using Eventuous;
 using Eventuous.EventStoreDB;
 using Eventuous.EventStoreDB.Subscriptions;
 using Eventuous.Projections.MongoDB;
+using Eventuous.Projections.SqlServer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,7 +54,7 @@ namespace Conduit.Api
             services.AddSingleton(_ => new MongoClient(connectionString));
             services.AddSingleton(
                     o => o.GetService<MongoClient>()!.GetDatabase("Conduit"))
-                .AddSingleton<ICheckpointStore, MongoCheckpointStore>();
+                .AddSingleton<ICheckpointStore, SqlServerCheckpointStore>();
 
             services.AddSingleton(
                 o => new ConduitSubscriber(
