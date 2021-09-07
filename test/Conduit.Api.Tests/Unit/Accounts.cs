@@ -15,7 +15,6 @@ namespace Conduit.Api.Tests.Unit
             var result = await svc.Handle(
                 new Features.Accounts.Commands.Register(user),
                 CancellationToken.None);
-            ;
 
             var actual = result.State;
             Assert.Equal(user.Email, actual.Email);
