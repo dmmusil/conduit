@@ -13,8 +13,10 @@ using Eventuous;
 using Eventuous.EventStoreDB;
 using Eventuous.Projections.SqlServer;
 using Eventuous.Subscriptions;
+using Eventuous.Subscriptions.EventStoreDB;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -73,11 +75,26 @@ namespace Conduit.Api
                         new TagsEventHandler(
                             o.GetService<IMongoDatabase>()!,
                             "Conduit",
-                            o.GetService<ILoggerFactory>()!)
+                            o.GetService<ILoggerFactory>()!),
                     },
                     o.GetService<IEventSerializer>()!,
                     o.GetService<ILoggerFactory>()!));
+            services.AddSingleton(o =>
+                new TransactionalAllStreamSubscriptionService(
+                    o.GetService<EventStoreClient>(),
+                    new AllStreamSubscriptionOptions
+                        { SubscriptionId = "ConduitSql" },
+                    o.GetService<ICheckpointStore>(), new IEventHandler[]
+                    {
+                        new SqlAccountsEventHandler(
+                            o.GetService<IConfiguration>()!, "ConduitSql",
+                            o.GetService<ILoggerFactory>()!)
+
+                    }, o.GetService<IEventSerializer>()!,
+                    o.GetService<ILoggerFactory>()));
+            
             services.AddHostedService(o => o.GetService<ConduitSubscriber>());
+            services.AddHostedService(o => o.GetService<TransactionalAllStreamSubscriptionService>());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

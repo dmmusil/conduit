@@ -19,6 +19,8 @@ namespace Eventuous.Projections.SqlServer
         TransactionalAllStreamSubscriptionService :
             EventStoreSubscriptionService
     {
+        private readonly ILogger _log;
+
         public TransactionalAllStreamSubscriptionService(
             EventStoreClient eventStoreClient,
             EventStoreSubscriptionOptions options,
@@ -30,6 +32,7 @@ namespace Eventuous.Projections.SqlServer
             options, checkpointStore, eventHandlers, eventSerializer,
             loggerFactory, measure)
         {
+            _log = loggerFactory.CreateLogger(GetType());
         }
 
         protected override async Task<EventSubscription> Subscribe(
@@ -80,6 +83,7 @@ namespace Eventuous.Projections.SqlServer
             ResolvedEvent e,
             CancellationToken ct)
         {
+            _log.LogDebug($"Subscription {SubscriptionId} got an event {e.Event.EventType}");
             using var tx = new TransactionScope();
 
             await Handler(AsReceivedEvent(e), ct);
@@ -115,19 +119,27 @@ namespace Eventuous.Projections.SqlServer
     public abstract class SqlServerProjection : IEventHandler
     {
         private readonly string _connectionString;
+        private readonly ILogger _log;
 
         protected SqlServerProjection(IConfiguration configuration,
-            string subscriptionId)
+            string subscriptionId, ILoggerFactory loggerFactory)
         {
             SubscriptionId = subscriptionId;
             _connectionString = configuration.GetConnectionString("ReadModels");
+            _log = loggerFactory.CreateLogger(GetType());
         }
 
         public async Task HandleEvent(object evt, long? position)
         {
             await using var connection = new SqlConnection(_connectionString);
             var commandDefinition = GetCommand(evt);
-            if (string.IsNullOrEmpty(commandDefinition.CommandText)) return;
+            if (string.IsNullOrEmpty(commandDefinition.CommandText))
+            {
+                _log.LogDebug($"No handler for {evt.GetType().Name}");
+                return;
+            }
+
+            _log.LogDebug($"Projecting {evt.GetType().Name}. {commandDefinition.CommandText}");
             await connection.ExecuteAsync(commandDefinition);
         }
 
@@ -180,8 +192,33 @@ namespace Eventuous.Projections.SqlServer
 
             await EnsureDatabase();
             await EnsureCheckpoints();
+            await EnsureAccounts();
 
             _dbExists = true;
+        }
+
+        private async Task EnsureAccounts()
+        {
+            const string query = @"
+if exists(select *
+          from conduit.INFORMATION_SCHEMA.TABLES
+          where TABLE_NAME = 'Accounts')
+    begin
+        set noexec on;
+    end
+
+create table dbo.Accounts
+(
+    StreamId       varchar(200) not null,
+    Email          varchar(200) not null,
+    Username       varchar(50)  not null,
+    PasswordHash          varchar(200) not null,
+    constraint PK_Accounts primary key (StreamId)
+)
+";
+            await using var connection = new SqlConnection(_connectionString);
+            await connection.ExecuteAsync(query);
+            Console.WriteLine("Created accounts.");
         }
 
         private async Task EnsureDatabase()
@@ -243,7 +280,7 @@ create table dbo.Checkpoints
 ";
             await using var connection = new SqlConnection(_connectionString);
             await connection.ExecuteAsync(query);
-            Console.WriteLine("Created schema.");
+            Console.WriteLine("Created checkpoints table.");
         }
 
         public async ValueTask<Checkpoint> StoreCheckpoint(

@@ -2,6 +2,7 @@ using Conduit.Api.Features.Accounts.Events;
 using Dapper;
 using Eventuous.Projections.SqlServer;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Conduit.Api.Features.Accounts.Projectors
 {
@@ -9,7 +10,8 @@ namespace Conduit.Api.Features.Accounts.Projectors
     {
         public SqlAccountsEventHandler(
             IConfiguration configuration,
-            string subscriptionId) : base(configuration, subscriptionId)
+            string subscriptionId, ILoggerFactory loggerFactory) : base(
+            configuration, subscriptionId, loggerFactory)
         {
         }
 
@@ -17,7 +19,7 @@ namespace Conduit.Api.Features.Accounts.Projectors
         {
             return evt switch
             {
-                Events.UserRegistered e => new UserRegisteredCommand(e)
+                UserRegistered e => new UserRegisteredCommand(e)
                     .CommandDefinition,
                 _ => default
             };
