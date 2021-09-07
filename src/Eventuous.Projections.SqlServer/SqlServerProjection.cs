@@ -30,7 +30,7 @@ namespace Eventuous.Projections.SqlServer
                 var commandDefinition = GetCommand(evt);
                 if (string.IsNullOrEmpty(commandDefinition.CommandText))
                 {
-                    _log.LogDebug($"No handler for {evt.GetType().Name}");
+                    _log.LogDebug("No handler for {Name}", evt.GetType().Name);
                     return;
                 }
 
