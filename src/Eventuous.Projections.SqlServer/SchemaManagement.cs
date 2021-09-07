@@ -31,8 +31,29 @@ namespace Eventuous.Projections.SqlServer
             await EnsureDatabase();
             await EnsureCheckpoints();
             await EnsureAccounts();
+            await EnsureFollowers();
 
             _created = true;
+        }
+
+        private async Task EnsureFollowers()
+        {
+            const string query = @"
+if not exists(select *
+          from conduit.INFORMATION_SCHEMA.TABLES
+          where TABLE_NAME = 'Followers')
+    begin
+        create table dbo.Followers
+        (
+            FollowedUserId  varchar(32) not null,
+            FollowingUserId varchar(32) not null,
+            constraint PK_Followers primary key (FollowedUserId, FollowingUserId)
+        )
+    end
+";
+            await using var connection = Connection;
+            await connection.ExecuteAsync(query);
+            Console.WriteLine("Created followers.");
         }
 
         private async Task EnsureAccounts()
@@ -44,7 +65,7 @@ if not exists(select *
     begin
         create table dbo.Accounts
         (
-            StreamId        varchar(200)    not null,
+            StreamId        varchar(32)     not null,
             Email           varchar(200)    not null,
             Username        varchar(50)     not null,
             PasswordHash    varchar(200)    not null,

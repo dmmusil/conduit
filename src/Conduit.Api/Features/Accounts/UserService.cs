@@ -44,7 +44,7 @@ namespace Conduit.Api.Features.Accounts
         {
             var account = await _store.Load<Account>(new AccountId(userId), CancellationToken.None);
             var state = account.State;
-            return new User(userId, state.Email, state.Username);
+            return new User(userId, state.Email, state.Username, state.Bio, state.Image);
         }
     }
 }

@@ -34,7 +34,8 @@ namespace Eventuous.Projections.SqlServer
                     return;
                 }
 
-                _log.LogDebug($"Projecting {evt.GetType().Name}. {commandDefinition.CommandText} - {evt}");
+                _log.LogDebug("Projecting {Name}. {CommandText} - {Evt}",
+                    evt.GetType().Name, commandDefinition.CommandText, evt);
                 await connection.ExecuteAsync(commandDefinition);
             }
             catch (Exception e)

@@ -42,6 +42,8 @@ namespace Conduit.Api.Features.Accounts
                         state.Id,
                         state.Email,
                         state.Username,
+                        state.Bio,
+                        state.Image,
                         Token: _jwtIssuer.GenerateJwtToken(state.Id))));
         }
 
@@ -63,6 +65,8 @@ namespace Conduit.Api.Features.Accounts
                             user.Id,
                             user.Email,
                             user.Username,
+                            user.Bio,
+                            user.Image,
                             Token: _jwtIssuer.GenerateJwtToken(user.Id))))
                 : error;
         }

@@ -1,3 +1,4 @@
+using System.Data;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts;
 using Conduit.Api.Features.Accounts.Events;
@@ -16,6 +17,7 @@ using Eventuous.Subscriptions;
 using Eventuous.Subscriptions.EventStoreDB;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -44,6 +46,9 @@ namespace Conduit.Api
                 .AddScoped<ArticleRepository>()
                 .AddScoped<ArticleService>()
                 .AddScoped<JwtIssuer>()
+                .AddScoped<IDbConnection>(o =>
+                    new SqlConnection(o.GetService<IConfiguration>()
+                        .GetConnectionString("ReadModels")))
                 .AddCors()
                 .AddControllers();
 

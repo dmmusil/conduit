@@ -26,6 +26,8 @@ namespace Conduit.Api.Features.Accounts.Projectors
                 BioUpdated e => new CommandDefinition("update Accounts set Bio=@Bio where StreamId=@StreamId", e),
                 ImageUpdated e => new CommandDefinition("update Accounts set Image=@Image where StreamId=@StreamId", e),
                 UsernameUpdated e => new CommandDefinition("update Accounts set Username=@Username where StreamId=@StreamId", e),
+                AccountFollowed e => new CommandDefinition("insert into Followers (FollowedUserId, FollowingUserId) values (@FollowedId, @StreamId)", e),
+                AccountUnfollowed e => new CommandDefinition("delete from Followers where FollowedUserId=@UnfollowedId and FollowingUserId=@StreamId", e),
                 _ => default
             };
         }

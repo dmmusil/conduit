@@ -1,15 +1,21 @@
+using System.Data;
 using System.Threading.Tasks;
 using Conduit.Api.Features.Accounts.Projections;
+using Dapper;
 using MongoDB.Driver;
 
 namespace Conduit.Api.Features.Accounts.Queries
 {
     public class UserRepository
     {
+        private readonly IDbConnection _connection;
         private readonly IMongoCollection<UserDocument> _database;
 
-        public UserRepository(IMongoDatabase database) =>
+        public UserRepository(IMongoDatabase database, IDbConnection connection)
+        {
+            _connection = connection;
             _database = database.GetCollection<UserDocument>("User");
+        }
 
         public async Task<UserDocument> GetUserByEmail(string email)
         {
@@ -17,10 +23,12 @@ namespace Conduit.Api.Features.Accounts.Queries
             return await query.SingleOrDefaultAsync();
         }
 
-        public async Task<UserDocument> GetUserByUsername(string username)
+        public async Task<User> GetUserByUsername(string username)
         {
-            var query = await _database.FindAsync(d => d.Username == username);
-            return await query.SingleOrDefaultAsync();
+            const string query =
+                "select StreamId as Id, Email, Username, Bio, Image from Accounts where Username=@username";
+            return await _connection.QuerySingleOrDefaultAsync<User>(
+                query, new {username});
         }
 
         public async Task<bool> UsernameExists(
