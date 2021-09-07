@@ -11,6 +11,7 @@ namespace Conduit.Api.Features.Articles.Aggregates
     public class Article : Aggregate<ArticleState, ArticleId>
     {
         public void Publish(
+            ArticleId articleId,
             string title,
             string titleSlug,
             string description,
@@ -19,7 +20,6 @@ namespace Conduit.Api.Features.Articles.Aggregates
             IEnumerable<string>? tags)
         {
             EnsureDoesntExist();
-            var articleId = new ArticleId(Guid.NewGuid().ToString("N"));
             Apply(
                 new ArticlePublished(
                     articleId,

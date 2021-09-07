@@ -1,4 +1,4 @@
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts.Aggregates;
@@ -44,7 +44,7 @@ namespace Conduit.Api.Features.Accounts
             var command = new Commands.FollowUser(
                 new AccountId(follower.Id),
                 account.Id);
-            await _svc.Handle(command);
+            await _svc.Handle(command, CancellationToken.None);
 
             return Ok(
                 new ProfileEnvelope(
@@ -67,7 +67,7 @@ namespace Conduit.Api.Features.Accounts
             var command = new Commands.UnfollowUser(
                 new AccountId(follower.Id),
                 account.Id);
-            await _svc.Handle(command);
+            await _svc.Handle(command, CancellationToken.None);
 
             return Ok(
                 new ProfileEnvelope(

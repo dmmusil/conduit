@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts.Queries;
@@ -66,6 +67,7 @@ namespace Conduit.Api.Features.Articles
                 return Conflict($"{existingSlug} already exists.");
 
             var cmd = new PublishArticle(
+                Guid.NewGuid().ToString("N"),
                 title,
                 title.ToSlug(),
                 description,
@@ -77,7 +79,7 @@ namespace Conduit.Api.Features.Articles
                     author.Image,
                     false),
                 tags);
-            var (state, _) = await _svc.Handle(cmd);
+            var (state, _) = await _svc.Handle(cmd, CancellationToken.None);
             return Ok(StateToArticleResponse(state, false));
         }
 
@@ -125,7 +127,7 @@ namespace Conduit.Api.Features.Articles
             {
                 Article = update.Article with {ArticleId = article.Id}
             };
-            var (state, _) = await _svc.Handle(update.Article);
+            var (state, _) = await _svc.Handle(update.Article, CancellationToken.None);
             return Ok(StateToArticleResponse(state, false));
         }
 
@@ -140,7 +142,7 @@ namespace Conduit.Api.Features.Articles
                 return Forbid();
 
             var cmd = new DeleteArticle(article.Id);
-            await _svc.Handle(cmd);
+            await _svc.Handle(cmd, CancellationToken.None);
             return NoContent();
         }
 
@@ -151,7 +153,7 @@ namespace Conduit.Api.Features.Articles
             var user = HttpContext.GetLoggedInUser();
             var article = await _articleRepository.GetArticleBySlug(slug);
             var favorite = new FavoriteArticle(article.Id, user.Id);
-            var (state, _) = await _svc.Handle(favorite);
+            var (state, _) = await _svc.Handle(favorite, CancellationToken.None);
             return Ok(StateToArticleResponse(state, false));
         }
 
@@ -162,7 +164,7 @@ namespace Conduit.Api.Features.Articles
             var user = HttpContext.GetLoggedInUser();
             var article = await _articleRepository.GetArticleBySlug(slug);
             var unfavorite = new UnfavoriteArticle(article.Id, user.Id);
-            var (state, _) = await _svc.Handle(unfavorite);
+            var (state, _) = await _svc.Handle(unfavorite, CancellationToken.None);
             return Ok(StateToArticleResponse(state, false));
         }
 

@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts.Queries;
@@ -33,7 +34,8 @@ namespace Conduit.Api.Features.Accounts
             if (await _users.UsernameExists(register.User.Username))
                 return Conflict("Username already taken");
 
-            var (state, _) = await _svc.Handle(register);
+            var (state, _) =
+                await _svc.Handle(register, CancellationToken.None);
             return Ok(
                 new UserEnvelope(
                     new User(
@@ -47,7 +49,10 @@ namespace Conduit.Api.Features.Accounts
         public async Task<IActionResult> LogIn([FromBody] Commands.LogIn login)
         {
             var error = NotFound(
-                new {Errors = new {InvalidCredentials = "User not found."}});
+                new
+                {
+                    Errors = new { InvalidCredentials = "User not found." }
+                });
             var user = await _users.GetUserByEmail(login.User.Email);
             if (user == null) return error;
             var authResult = user.VerifyPassword(login.User.Password);

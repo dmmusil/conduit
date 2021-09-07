@@ -11,9 +11,8 @@ using Conduit.Api.Infrastructure;
 using EventStore.Client;
 using Eventuous;
 using Eventuous.EventStoreDB;
-using Eventuous.EventStoreDB.Subscriptions;
-using Eventuous.Projections.MongoDB;
 using Eventuous.Projections.SqlServer;
+using Eventuous.Subscriptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,7 +33,7 @@ namespace Conduit.Api
                     _ => new EventStoreClient(
                         EventStoreClientSettings.Create(
                             "esdb://admin:changeit@localhost:2113?tls=false")))
-                .AddSingleton<IEventStore, EsDbEventStore>()
+                .AddSingleton<IEventStore, EsdbEventStore>()
                 .AddSingleton(DefaultEventSerializer.Instance)
                 .AddSingleton<AppSettings>()
                 .AddScoped<IAggregateStore, AggregateStore>()
@@ -61,7 +60,6 @@ namespace Conduit.Api
                     o.GetService<EventStoreClient>()!,
                     "Conduit",
                     o.GetService<ICheckpointStore>()!,
-                    o.GetService<IEventSerializer>()!,
                     new IEventHandler[]
                     {
                         new AccountsEventHandler(
@@ -76,8 +74,8 @@ namespace Conduit.Api
                             o.GetService<IMongoDatabase>()!,
                             "Conduit",
                             o.GetService<ILoggerFactory>()!)
-
                     },
+                    o.GetService<IEventSerializer>()!,
                     o.GetService<ILoggerFactory>()!));
             services.AddHostedService(o => o.GetService<ConduitSubscriber>());
         }

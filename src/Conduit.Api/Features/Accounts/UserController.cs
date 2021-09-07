@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts.Queries;
@@ -35,7 +36,7 @@ namespace Conduit.Api.Features.Accounts
 
             var token = user.Token;
             update = update with {StreamId = user.Id};
-            var (state, _) = await _svc.Handle(update);
+            var (state, _) = await _svc.Handle(update, CancellationToken.None);
             return Ok(
                 new UserEnvelope(
                     new User(

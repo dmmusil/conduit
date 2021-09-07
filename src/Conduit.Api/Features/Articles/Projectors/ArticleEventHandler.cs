@@ -24,7 +24,7 @@ namespace Conduit.Api.Features.Articles.Projectors
         }
 
         protected override ValueTask<Operation<ArticleDocument>> GetUpdate(
-            object evt) =>
+            object evt, long? position) =>
             evt switch
             {
                 ArticlePublished e => UpdateOperationTask(

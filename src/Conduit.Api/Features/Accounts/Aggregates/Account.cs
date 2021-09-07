@@ -7,12 +7,12 @@ namespace Conduit.Api.Features.Accounts.Aggregates
 {
     public class Account : Aggregate<AccountState, AccountId>
     {
-        public void Register(string username, string email, string passwordHash)
+        public void Register(AccountId userId, string username, string email, string passwordHash)
         {
             if (State.AlreadyRegistered) return;
             Apply(
                 new UserRegistered(
-                    Guid.NewGuid().ToString("N"),
+                    userId,
                     email,
                     username,
                     passwordHash));

@@ -19,7 +19,7 @@ namespace Conduit.Api.Features.Accounts.Projectors
         }
 
         protected override ValueTask<Operation<UserDocument>> GetUpdate(
-            object evt)
+            object evt, long? position)
         {
             return evt switch
             {

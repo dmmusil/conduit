@@ -1,7 +1,6 @@
-using System;
-using System.Data.Common;
 using Conduit.Api.Features.Accounts.Events;
 using Dapper;
+using Eventuous.Projections.SqlServer;
 using Microsoft.Extensions.Configuration;
 
 namespace Conduit.Api.Features.Accounts.Projectors

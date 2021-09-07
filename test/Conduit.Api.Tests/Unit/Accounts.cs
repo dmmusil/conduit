@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -12,7 +13,9 @@ namespace Conduit.Api.Tests.Unit
 
             var user = Fixtures.UserRegistration;
             var result = await svc.Handle(
-                new Features.Accounts.Commands.Register(user));
+                new Features.Accounts.Commands.Register(user),
+                CancellationToken.None);
+            ;
 
             var actual = result.State;
             Assert.Equal(user.Email, actual.Email);
