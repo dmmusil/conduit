@@ -76,6 +76,12 @@ namespace Eventuous.Projections.SqlServer
             
         }
 
+        /// <summary>
+        /// Wrap event handling and checkpoint updates in a transaction.
+        /// </summary>
+        /// <param name="_"></param>
+        /// <param name="e"></param>
+        /// <param name="ct"></param>
         private async Task TransactionalHandler(
             StreamSubscription _,
             ResolvedEvent e,

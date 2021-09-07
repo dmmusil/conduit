@@ -11,13 +11,13 @@ namespace Eventuous.Projections.SqlServer
 {
     public class SqlServerCheckpointStore : ICheckpointStore
     {
+        private readonly IConfiguration _config;
         private readonly string _connectionString;
-        private readonly string _masterConnectionString;
 
         public SqlServerCheckpointStore(IConfiguration config)
         {
+            _config = config;
             _connectionString = config.GetConnectionString("ReadModels");
-            _masterConnectionString = config.GetConnectionString("Master");
         }
 
         public async ValueTask<Checkpoint> GetLastCheckpoint(
@@ -26,8 +26,8 @@ namespace Eventuous.Projections.SqlServer
         {
             await using var connection = new SqlConnection(_connectionString);
 
-            await EnsureDatabaseOnce();
-
+            await new SchemaManagement(_config).CreateSchemaOnce();
+            
             const string query = @"
             select Position 
             from Checkpoints 
@@ -39,107 +39,6 @@ namespace Eventuous.Projections.SqlServer
             return result == default
                 ? new Checkpoint(checkpointId, null)
                 : new Checkpoint(checkpointId, (ulong?)result);
-        }
-
-        private static bool _dbExists;
-
-        private async Task EnsureDatabaseOnce()
-        {
-            if (_dbExists) return;
-
-            await EnsureDatabase();
-            await EnsureCheckpoints();
-            await EnsureAccounts();
-
-            _dbExists = true;
-        }
-
-        private async Task EnsureAccounts()
-        {
-            const string query = @"
-if exists(select *
-          from conduit.INFORMATION_SCHEMA.TABLES
-          where TABLE_NAME = 'Accounts')
-    begin
-        set noexec on;
-    end
-
-create table dbo.Accounts
-(
-    StreamId        varchar(200)    not null,
-    Email           varchar(200)    not null,
-    Username        varchar(50)     not null,
-    PasswordHash    varchar(200)    not null,
-    Bio             varchar(1000)   null,
-    Image           varchar(200)    null,
-    constraint PK_Accounts primary key (StreamId)
-)
-";
-            await using var connection = new SqlConnection(_connectionString);
-            await connection.ExecuteAsync(query);
-            Console.WriteLine("Created accounts.");
-        }
-
-        private async Task EnsureDatabase()
-        {
-            const string query = @"
-if exists(select *
-          from sys.databases
-          where name = 'conduit')
-    begin
-        set noexec on;
-    end
-
-create database conduit;
-
-set noexec off;
-
-";
-            await using var masterConnection =
-                new SqlConnection(_masterConnectionString);
-
-            await TryConnect(masterConnection);
-
-            await masterConnection.ExecuteAsync(query);
-            Console.WriteLine("Created database.");
-        }
-
-        private static async Task TryConnect(IDbConnection masterConnection)
-        {
-            for (var i = 0; i < 100; i++)
-            {
-                try
-                {
-                    await masterConnection.QueryAsync("select 1");
-                }
-                catch
-                {
-                    Console.WriteLine($"Login attempt {i} failed.");
-                    await Task.Delay(1000);
-                }
-            }
-        }
-
-        private async Task EnsureCheckpoints()
-        {
-            const string query = @"
-if exists(select *
-          from conduit.INFORMATION_SCHEMA.TABLES
-          where TABLE_NAME = 'Checkpoints')
-    begin
-        set noexec on;
-    end
-
-create table dbo.Checkpoints
-(
-    Id       varchar(200) not null,
-    Position bigint       null,
-    constraint PK_Checkpoints primary key (Id)
-)
-";
-            await using var connection = new SqlConnection(_connectionString);
-            await connection.ExecuteAsync(query);
-            Console.WriteLine("Created checkpoints table.");
         }
 
         public async ValueTask<Checkpoint> StoreCheckpoint(
