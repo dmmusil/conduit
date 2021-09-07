@@ -66,10 +66,12 @@ if exists(select *
 
 create table dbo.Accounts
 (
-    StreamId       varchar(200) not null,
-    Email          varchar(200) not null,
-    Username       varchar(50)  not null,
-    PasswordHash          varchar(200) not null,
+    StreamId        varchar(200)    not null,
+    Email           varchar(200)    not null,
+    Username        varchar(50)     not null,
+    PasswordHash    varchar(200)    not null,
+    Bio             varchar(1000)   null,
+    Image           varchar(200)    null,
     constraint PK_Accounts primary key (StreamId)
 )
 ";

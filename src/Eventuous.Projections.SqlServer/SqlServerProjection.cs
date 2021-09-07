@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using Eventuous.Subscriptions;
@@ -11,7 +12,7 @@ namespace Eventuous.Projections.SqlServer
     public abstract class SqlServerProjection : IEventHandler
     {
         private readonly string _connectionString;
-        private readonly ILogger _log;
+        protected readonly ILogger _log;
 
         protected SqlServerProjection(IConfiguration configuration,
             string subscriptionId, ILoggerFactory loggerFactory)
@@ -23,16 +24,24 @@ namespace Eventuous.Projections.SqlServer
 
         public async Task HandleEvent(object evt, long? position)
         {
-            await using var connection = new SqlConnection(_connectionString);
-            var commandDefinition = GetCommand(evt);
-            if (string.IsNullOrEmpty(commandDefinition.CommandText))
+            try
             {
-                _log.LogDebug($"No handler for {evt.GetType().Name}");
-                return;
-            }
+                await using var connection = new SqlConnection(_connectionString);
+                var commandDefinition = GetCommand(evt);
+                if (string.IsNullOrEmpty(commandDefinition.CommandText))
+                {
+                    _log.LogDebug($"No handler for {evt.GetType().Name}");
+                    return;
+                }
 
-            _log.LogDebug($"Projecting {evt.GetType().Name}. {commandDefinition.CommandText}");
-            await connection.ExecuteAsync(commandDefinition);
+                _log.LogDebug($"Projecting {evt.GetType().Name}. {commandDefinition.CommandText} - {evt}");
+                await connection.ExecuteAsync(commandDefinition);
+            }
+            catch (Exception e)
+            {
+                _log.LogError(e.ToString());
+                throw;
+            }
         }
 
         protected abstract CommandDefinition GetCommand(object evt);

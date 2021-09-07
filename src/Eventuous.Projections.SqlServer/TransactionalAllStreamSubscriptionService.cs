@@ -72,6 +72,8 @@ namespace Eventuous.Projections.SqlServer
             SubscriptionDroppedReason arg2,
             Exception? arg3)
         {
+            _log.LogWarning($"Subscription {SubscriptionId} dropped. Reason: {arg2}");
+            
         }
 
         private async Task TransactionalHandler(
@@ -79,12 +81,20 @@ namespace Eventuous.Projections.SqlServer
             ResolvedEvent e,
             CancellationToken ct)
         {
-            _log.LogDebug($"Subscription {SubscriptionId} got an event {e.Event.EventType}");
-            using var tx = new TransactionScope();
+            try
+            {
+                _log.LogDebug($"Subscription {SubscriptionId} got an event {e.Event.EventType}");
+                using var tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-            await Handler(AsReceivedEvent(e), ct);
+                await Handler(AsReceivedEvent(e), ct);
 
-            tx.Complete();
+                tx.Complete();
+            }
+            catch (Exception exception)
+            {
+                _log.LogError(exception.ToString());
+                throw;
+            }
 
             ReceivedEvent AsReceivedEvent(ResolvedEvent re)
             {

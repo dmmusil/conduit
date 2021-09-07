@@ -19,16 +19,23 @@ namespace Conduit.Api.Features.Accounts.Projectors
         {
             return evt switch
             {
-                UserRegistered e => new UserRegisteredCommand(e)
+                UserRegistered e => new UserRegisteredInsert(e)
                     .CommandDefinition,
+                EmailUpdated e => new CommandDefinition("update Accounts set Email=@Email where StreamId=@StreamId", e),
+                PasswordUpdated e => new CommandDefinition("update Accounts set PasswordHash=@PasswordHash where StreamId=@StreamId", e),
+                BioUpdated e => new CommandDefinition("update Accounts set Bio=@Bio where StreamId=@StreamId", e),
+                ImageUpdated e => new CommandDefinition("update Accounts set Image=@Image where StreamId=@StreamId", e),
+                UsernameUpdated e => new CommandDefinition("update Accounts set Username=@Username where StreamId=@StreamId", e),
                 _ => default
             };
         }
     }
 
-    public class UserRegisteredCommand
+    
+    
+    public class UserRegisteredInsert
     {
-        public UserRegisteredCommand(UserRegistered userRegistered)
+        public UserRegisteredInsert(UserRegistered userRegistered)
         {
             CommandDefinition = new CommandDefinition(
                 "insert into Accounts (StreamId, Email, Username, PasswordHash) values (@StreamId, @Email, @Username, @PasswordHash)",
