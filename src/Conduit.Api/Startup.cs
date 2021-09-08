@@ -69,10 +69,6 @@ namespace Conduit.Api
                     o.GetService<ICheckpointStore>()!,
                     new IEventHandler[]
                     {
-                        new AccountsEventHandler(
-                            o.GetService<IMongoDatabase>()!,
-                            "Conduit",
-                            o.GetService<ILoggerFactory>()!),
                         new ArticleEventHandler(
                             o.GetService<IMongoDatabase>()!,
                             "Conduit",

@@ -18,4 +18,8 @@
     <ProjectReference Include="..\Eventuous.Projections.SqlServer\Eventuous.Projections.SqlServer.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Accounts\Projections" />
+  </ItemGroup>
+
 </Project>
