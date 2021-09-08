@@ -1,29 +1,27 @@
 using System.Data;
 using System.Threading.Tasks;
-using Conduit.Api.Features.Accounts.Projections;
 using Dapper;
-using MongoDB.Driver;
 
 namespace Conduit.Api.Features.Accounts.Queries
 {
     public class UserRepository
     {
         private readonly IDbConnection _connection;
-        private readonly IMongoCollection<UserDocument> _database;
 
-        public UserRepository(IMongoDatabase database, IDbConnection connection)
+        public UserRepository(IDbConnection connection)
         {
             _connection = connection;
-            _database = database.GetCollection<UserDocument>("User");
         }
 
-        public async Task<UserDocument> GetUserByEmail(string email)
+        public async Task<User?> GetUserByEmail(string email)
         {
-            var query = await _database.FindAsync(d => d.Email == email);
-            return await query.SingleOrDefaultAsync();
+            const string query =
+                "select StreamId as Id, Email, Username, Bio, Image from Accounts where Email=@email";
+            return await _connection.QuerySingleOrDefaultAsync<User>(
+                query, new {email});
         }
 
-        public async Task<User> GetUserByUsername(string username)
+        public async Task<User?> GetUserByUsername(string username)
         {
             const string query =
                 "select StreamId as Id, Email, Username, Bio, Image from Accounts where Username=@username";
@@ -47,10 +45,12 @@ namespace Conduit.Api.Features.Accounts.Queries
             return userWithEmail != null && userWithEmail.Id != user?.Id;
         }
 
-        public async Task<UserDocument> GetUserByUuid(string uuid)
+        public async Task<User> GetUserByUuid(string uuid)
         {
-            var query = await _database.FindAsync(d => d.Id == uuid);
-            return await query.SingleOrDefaultAsync();
+            const string query =
+                "select StreamId as Id, Email, Username, Bio, Image from Accounts where StreamId=@uuid";
+            return await _connection.QuerySingleOrDefaultAsync<User>(
+                query, new {uuid});
         }
 
         public async Task<Profile?> ProfileWithFollowingStatus(
@@ -67,12 +67,36 @@ namespace Conduit.Api.Features.Accounts.Queries
                     profile.Image,
                     false);
 
-            var callerProfile = await GetUserByUuid(callerId);
+            var isFollowing = await IsUserFollowing(callerId, profile.Id);
+            
             return new Profile(
                 profile.Username,
                 profile.Bio,
                 profile.Image,
-                callerProfile.IsFollowing(profile.Id));
+                isFollowing);
+        }
+
+        private async Task<bool> IsUserFollowing(string callerId, string profileId)
+        {
+            const string query =
+                "select FollowedUserId from Followers where FollowedUserId=@profileId and FollowingUserId=@callerId";
+            var followedUser =
+                await _connection.QuerySingleOrDefaultAsync<string>(query,
+                    new { callerId, profileId });
+            return followedUser != null;
+        }
+
+        public async Task<User?> Authenticate(string email, string password)
+        {
+            const string query =
+                "select StreamId as Id, Email, Username, Bio, Image, PasswordHash from Accounts where Email=@email";
+            var user = await _connection.QuerySingleOrDefaultAsync<dynamic>(
+                query, new {email});
+            var valid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+            return valid
+                ? new User(user.Id, user.Email, user.Username, user.Bio,
+                    user.Image)
+                : null;
         }
     }
 }

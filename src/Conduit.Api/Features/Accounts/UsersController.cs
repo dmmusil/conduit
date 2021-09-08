@@ -55,10 +55,9 @@ namespace Conduit.Api.Features.Accounts
                 {
                     Errors = new { InvalidCredentials = "User not found." }
                 });
-            var user = await _users.GetUserByEmail(login.User.Email);
-            if (user == null) return error;
-            var authResult = user.VerifyPassword(login.User.Password);
-            return authResult
+            var (_, (email, password)) = login;
+            var user = await _users.Authenticate(email, password);
+            return user != null
                 ? Ok(
                     new UserEnvelope(
                         new User(
