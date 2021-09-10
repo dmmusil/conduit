@@ -32,8 +32,62 @@ namespace Eventuous.Projections.SqlServer
             await EnsureCheckpoints();
             await EnsureAccounts();
             await EnsureFollowers();
+            await EnsureArticles();
+            await EnsureTags();
 
             _created = true;
+        }
+
+        private async Task EnsureTags()
+        {
+            const string query = @"
+if not exists(select *
+          from conduit.INFORMATION_SCHEMA.TABLES
+          where TABLE_NAME = 'Tags')
+    begin
+        create table dbo.Tags
+        (
+            TagId       int not null identity(1,1),
+            ArticleId   varchar(32) not null,
+            Tag         varchar(250) not null,
+            constraint PK_Tags primary key (TagId),
+        )
+    end
+";
+            await using var connection = Connection;
+            await connection.ExecuteAsync(query);
+            Console.WriteLine("Created tags.");
+        }
+
+        private async Task EnsureArticles()
+        {
+            const string query = @"
+if not exists(select *
+          from conduit.INFORMATION_SCHEMA.TABLES
+          where TABLE_NAME = 'Articles')
+    begin
+        create table dbo.Articles
+        (
+            ArticleId       varchar(32) not null,
+            Title           varchar(250) not null,
+            TitleSlug       varchar(300) not null,
+            Description     varchar(1000) not null,
+            Body            varchar(max) not null,
+            AuthorId        varchar(32) not null,
+            AuthorUsername  varchar(50) not null,
+            AuthorBio       varchar(200) null,
+            AuthorImage     varchar(200) null,
+            PublishDate     datetime2 not null,
+            UpdatedDate     datetime2 null,
+            FavoriteCount   int not null default 0,
+            constraint PK_Articles primary key (ArticleId),
+            constraint UIX_TitleSlug unique (TitleSlug)
+        )
+    end
+";
+            await using var connection = Connection;
+            await connection.ExecuteAsync(query);
+            Console.WriteLine("Created articles.");
         }
 
         private async Task EnsureFollowers()

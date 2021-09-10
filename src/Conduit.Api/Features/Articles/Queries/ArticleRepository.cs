@@ -1,34 +1,35 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Conduit.Api.Features.Articles.Projections;
-using MongoDB.Driver;
+using Dapper;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 
 namespace Conduit.Api.Features.Articles.Queries
 {
     public class ArticleRepository
     {
-        private readonly IMongoCollection<ArticleDocument> _database;
-        private readonly IMongoCollection<TagDocument> _tags;
+        private readonly IConfiguration _config;
 
-        public ArticleRepository(IMongoDatabase database) =>
-            (_database, _tags) = (
-                database.GetCollection<ArticleDocument>("Article"),
-                database.GetCollection<TagDocument>("Tag"));
-
-        public async Task<ArticleDocument> GetArticleBySlug(string slug)
+        public ArticleRepository(IConfiguration config)
         {
-            var query = await _database.FindAsync(d => d.TitleSlug == slug);
-            return await query.SingleOrDefaultAsync();
+            _config = config;
+        }
+
+        public async Task<ArticleDocument?> GetArticleBySlug(string slug)
+        {
+            const string query = "select * from Articles where TitleSlug=@slug";
+            await using var connection = Connection;
+            return await connection.QueryFirstOrDefaultAsync<ArticleDocument>(query, new {slug});
         }
 
         public async Task<IEnumerable<string>> GetTags()
         {
-            var query = await _tags.FindAsync(d => d.Id == nameof(TagDocument));
-            var result = await query.SingleOrDefaultAsync();
-            return result.Tags.OrderByDescending(kv => kv.Key)
-                .Where(kv => kv.Value > 0)
-                .Select(kv => kv.Key);
+            const string query = "select distinct Tag from Tags";
+            await using var connection = Connection;
+            return await connection.QueryAsync<string>(query);
         }
+
+        public SqlConnection Connection => new SqlConnection(_config.GetConnectionString("ReadModels"));
     }
 }

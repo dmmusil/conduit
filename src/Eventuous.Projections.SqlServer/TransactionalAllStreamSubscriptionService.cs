@@ -73,7 +73,6 @@ namespace Eventuous.Projections.SqlServer
             Exception? arg3)
         {
             _log.LogWarning($"Subscription {SubscriptionId} dropped. Reason: {arg2}");
-            
         }
 
         /// <summary>

@@ -8,7 +8,6 @@ using Conduit.Api.Features.Articles;
 using Conduit.Api.Features.Articles.Events;
 using Conduit.Api.Features.Articles.Projectors;
 using Conduit.Api.Features.Articles.Queries;
-using Conduit.Api.Infrastructure;
 using EventStore.Client;
 using Eventuous;
 using Eventuous.EventStoreDB;
@@ -22,7 +21,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
 
 namespace Conduit.Api
 {
@@ -55,46 +53,24 @@ namespace Conduit.Api
             AccountsRegistration.Register();
             ArticlesRegistration.Register();
 
-            const string connectionString =
-                "mongodb://mongoadmin:secret@localhost:27017/?authSource=admin&readPreference=primary&ssl=false";
-            services.AddSingleton(_ => new MongoClient(connectionString));
-            services.AddSingleton(
-                    o => o.GetService<MongoClient>()!.GetDatabase("Conduit"))
-                .AddSingleton<ICheckpointStore, SqlServerCheckpointStore>();
+            services.AddSingleton<ICheckpointStore, SqlServerCheckpointStore>();
 
-            services.AddSingleton(
-                o => new ConduitSubscriber(
-                    o.GetService<EventStoreClient>()!,
-                    "Conduit",
-                    o.GetService<ICheckpointStore>()!,
-                    new IEventHandler[]
-                    {
-                        new ArticleEventHandler(
-                            o.GetService<IMongoDatabase>()!,
-                            "Conduit",
-                            o.GetService<ILoggerFactory>()!),
-                        new TagsEventHandler(
-                            o.GetService<IMongoDatabase>()!,
-                            "Conduit",
-                            o.GetService<ILoggerFactory>()!),
-                    },
-                    o.GetService<IEventSerializer>()!,
-                    o.GetService<ILoggerFactory>()!));
             services.AddSingleton(o =>
                 new TransactionalAllStreamSubscriptionService(
-                    o.GetService<EventStoreClient>(),
+                    o.GetService<EventStoreClient>()!,
                     new AllStreamSubscriptionOptions
-                        { SubscriptionId = "ConduitSql" },
-                    o.GetService<ICheckpointStore>(), new IEventHandler[]
+                        {SubscriptionId = "ConduitSql"},
+                    o.GetService<ICheckpointStore>()!, new IEventHandler[]
                     {
+                        new SqlArticleEventHandler(
+                            o.GetService<IConfiguration>()!, "ConduitSql",
+                            o.GetService<ILoggerFactory>()!),
                         new SqlAccountsEventHandler(
                             o.GetService<IConfiguration>()!, "ConduitSql",
                             o.GetService<ILoggerFactory>()!)
-
                     }, o.GetService<IEventSerializer>()!,
                     o.GetService<ILoggerFactory>()));
-            
-            services.AddHostedService(o => o.GetService<ConduitSubscriber>());
+
             services.AddHostedService(o => o.GetService<TransactionalAllStreamSubscriptionService>());
         }
 

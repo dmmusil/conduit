@@ -125,7 +125,7 @@ namespace Conduit.Api.Features.Articles
 
             update = update with
             {
-                Article = update.Article with {ArticleId = article.Id}
+                Article = update.Article with {ArticleId = article.ArticleId}
             };
             var (state, _) = await _svc.Handle(update.Article, CancellationToken.None);
             return Ok(StateToArticleResponse(state, false));
@@ -141,7 +141,7 @@ namespace Conduit.Api.Features.Articles
             if (article.AuthorId != HttpContext.GetLoggedInUser().Id)
                 return Forbid();
 
-            var cmd = new DeleteArticle(article.Id);
+            var cmd = new DeleteArticle(article.ArticleId);
             await _svc.Handle(cmd, CancellationToken.None);
             return NoContent();
         }
@@ -152,7 +152,8 @@ namespace Conduit.Api.Features.Articles
         {
             var user = HttpContext.GetLoggedInUser();
             var article = await _articleRepository.GetArticleBySlug(slug);
-            var favorite = new FavoriteArticle(article.Id, user.Id);
+            if (article == null) return NotFound();
+            var favorite = new FavoriteArticle(article.ArticleId, user.Id);
             var (state, _) = await _svc.Handle(favorite, CancellationToken.None);
             return Ok(StateToArticleResponse(state, false));
         }
@@ -163,7 +164,8 @@ namespace Conduit.Api.Features.Articles
         {
             var user = HttpContext.GetLoggedInUser();
             var article = await _articleRepository.GetArticleBySlug(slug);
-            var unfavorite = new UnfavoriteArticle(article.Id, user.Id);
+            if (article == null) return NotFound();
+            var unfavorite = new UnfavoriteArticle(article.ArticleId, user.Id);
             var (state, _) = await _svc.Handle(unfavorite, CancellationToken.None);
             return Ok(StateToArticleResponse(state, false));
         }
@@ -176,7 +178,7 @@ namespace Conduit.Api.Features.Articles
             var existingSlug = newSlug != null
                 ? await _articleRepository.GetArticleBySlug(newSlug)
                 : null;
-            return existingSlug != null && existingSlug.Id != article.Id;
+            return existingSlug != null && existingSlug.ArticleId != article.ArticleId;
         }
 
         private static ArticleEnvelope

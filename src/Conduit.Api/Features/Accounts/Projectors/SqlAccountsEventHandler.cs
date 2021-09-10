@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Conduit.Api.Features.Accounts.Events;
 using Dapper;
 using Eventuous.Projections.SqlServer;
@@ -15,9 +16,9 @@ namespace Conduit.Api.Features.Accounts.Projectors
         {
         }
 
-        protected override CommandDefinition GetCommand(object evt)
+        protected override IEnumerable<CommandDefinition> GetCommand(object evt)
         {
-            return evt switch
+            var command = evt switch
             {
                 UserRegistered e => new UserRegisteredInsert(e)
                     .CommandDefinition,
@@ -30,6 +31,8 @@ namespace Conduit.Api.Features.Accounts.Projectors
                 AccountUnfollowed e => new CommandDefinition("delete from Followers where FollowedUserId=@UnfollowedId and FollowingUserId=@StreamId", e),
                 _ => default
             };
+            
+            return ArrayOf(command);
         }
     }
 

@@ -17,7 +17,7 @@ namespace Conduit.Api.Features.Articles.Aggregates
             string description,
             string body,
             Author author,
-            IEnumerable<string>? tags)
+            IEnumerable<string> tags)
         {
             EnsureDoesntExist();
             Apply(

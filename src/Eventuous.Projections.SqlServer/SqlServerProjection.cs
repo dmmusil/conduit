@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
@@ -27,16 +28,19 @@ namespace Eventuous.Projections.SqlServer
             try
             {
                 await using var connection = new SqlConnection(_connectionString);
-                var commandDefinition = GetCommand(evt);
-                if (string.IsNullOrEmpty(commandDefinition.CommandText))
+                var commands = GetCommand(evt);
+                foreach (var commandDefinition in commands)
                 {
-                    _log.LogDebug("No handler for {Name}", evt.GetType().Name);
-                    return;
-                }
+                    if (string.IsNullOrEmpty(commandDefinition.CommandText))
+                    {
+                        _log.LogDebug("No handler for {Name}", evt.GetType().Name);
+                        continue;
+                    }
 
-                _log.LogDebug("Projecting {Name}. {CommandText} - {Evt}",
-                    evt.GetType().Name, commandDefinition.CommandText, evt);
-                await connection.ExecuteAsync(commandDefinition);
+                    _log.LogDebug("Projecting {Name}. {CommandText} - {Evt}",
+                        evt.GetType().Name, commandDefinition.CommandText, evt);
+                    await connection.ExecuteAsync(commandDefinition);
+                }
             }
             catch (Exception e)
             {
@@ -45,8 +49,9 @@ namespace Eventuous.Projections.SqlServer
             }
         }
 
-        protected abstract CommandDefinition GetCommand(object evt);
+        protected abstract IEnumerable<CommandDefinition> GetCommand(object evt);
 
+        protected static IEnumerable<CommandDefinition> ArrayOf(params CommandDefinition[] commands) => commands;
         public Task HandleEvent(object evt, long? position,
             CancellationToken cancellationToken) => HandleEvent(evt, position);
 
