@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts.Queries;
@@ -66,6 +67,7 @@ namespace Conduit.Api.Features.Articles
                 return Conflict($"{existingSlug} already exists.");
 
             var cmd = new PublishArticle(
+                Guid.NewGuid().ToString("N"),
                 title,
                 title.ToSlug(),
                 description,
@@ -77,7 +79,7 @@ namespace Conduit.Api.Features.Articles
                     author.Image,
                     false),
                 tags);
-            var (state, _) = await _svc.Handle(cmd);
+            var (state, _) = await _svc.Handle(cmd, CancellationToken.None);
             return Ok(StateToArticleResponse(state, false));
         }
 
@@ -121,11 +123,12 @@ namespace Conduit.Api.Features.Articles
                 return Conflict(
                     $"{update.Article.Title?.ToSlug()} already exists.");
 
+            // set the article ID now that it's known after querying by incoming slug
             update = update with
             {
-                Article = update.Article with {ArticleId = article.Id}
+                Article = update.Article with {ArticleId = article.ArticleId}
             };
-            var (state, _) = await _svc.Handle(update.Article);
+            var (state, _) = await _svc.Handle(update.Article, CancellationToken.None);
             return Ok(StateToArticleResponse(state, false));
         }
 
@@ -139,8 +142,8 @@ namespace Conduit.Api.Features.Articles
             if (article.AuthorId != HttpContext.GetLoggedInUser().Id)
                 return Forbid();
 
-            var cmd = new DeleteArticle(article.Id);
-            await _svc.Handle(cmd);
+            var cmd = new DeleteArticle(article.ArticleId);
+            await _svc.Handle(cmd, CancellationToken.None);
             return NoContent();
         }
 
@@ -150,8 +153,9 @@ namespace Conduit.Api.Features.Articles
         {
             var user = HttpContext.GetLoggedInUser();
             var article = await _articleRepository.GetArticleBySlug(slug);
-            var favorite = new FavoriteArticle(article.Id, user.Id);
-            var (state, _) = await _svc.Handle(favorite);
+            if (article == null) return NotFound();
+            var favorite = new FavoriteArticle(article.ArticleId, user.Id);
+            var (state, _) = await _svc.Handle(favorite, CancellationToken.None);
             return Ok(StateToArticleResponse(state, false));
         }
 
@@ -161,8 +165,9 @@ namespace Conduit.Api.Features.Articles
         {
             var user = HttpContext.GetLoggedInUser();
             var article = await _articleRepository.GetArticleBySlug(slug);
-            var unfavorite = new UnfavoriteArticle(article.Id, user.Id);
-            var (state, _) = await _svc.Handle(unfavorite);
+            if (article == null) return NotFound();
+            var unfavorite = new UnfavoriteArticle(article.ArticleId, user.Id);
+            var (state, _) = await _svc.Handle(unfavorite, CancellationToken.None);
             return Ok(StateToArticleResponse(state, false));
         }
 
@@ -174,7 +179,7 @@ namespace Conduit.Api.Features.Articles
             var existingSlug = newSlug != null
                 ? await _articleRepository.GetArticleBySlug(newSlug)
                 : null;
-            return existingSlug != null && existingSlug.Id != article.Id;
+            return existingSlug != null && existingSlug.ArticleId != article.ArticleId;
         }
 
         private static ArticleEnvelope

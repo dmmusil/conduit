@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Conduit.Api.Features.Accounts.Aggregates;
 using Eventuous;
@@ -13,11 +14,13 @@ namespace Conduit.Api.Features.Accounts
         {
             _store = store;
             OnNew<Commands.Register>(
+                cmd => new AccountId(cmd.User.Id),
                 (account, cmd) =>
                 {
                     var hashedPassword =
                         BCrypt.Net.BCrypt.HashPassword(cmd.User.Password);
                     account.Register(
+                        new AccountId(cmd.User.Id),
                         cmd.User.Username,
                         cmd.User.Email,
                         hashedPassword);
@@ -39,9 +42,9 @@ namespace Conduit.Api.Features.Accounts
 
         public async Task<User> Load(string userId)
         {
-            var account = await _store.Load<Account>(new AccountId(userId));
+            var account = await _store.Load<Account>(new AccountId(userId), CancellationToken.None);
             var state = account.State;
-            return new User(userId, state.Email, state.Username);
+            return new User(userId, state.Email, state.Username, state.Bio, state.Image);
         }
     }
 }

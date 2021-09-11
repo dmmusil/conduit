@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts.Queries;
@@ -33,13 +34,16 @@ namespace Conduit.Api.Features.Accounts
             if (await _users.UsernameExists(register.User.Username))
                 return Conflict("Username already taken");
 
-            var (state, _) = await _svc.Handle(register);
+            var (state, _) =
+                await _svc.Handle(register, CancellationToken.None);
             return Ok(
                 new UserEnvelope(
                     new User(
                         state.Id,
                         state.Email,
                         state.Username,
+                        state.Bio,
+                        state.Image,
                         Token: _jwtIssuer.GenerateJwtToken(state.Id))));
         }
 
@@ -47,17 +51,21 @@ namespace Conduit.Api.Features.Accounts
         public async Task<IActionResult> LogIn([FromBody] Commands.LogIn login)
         {
             var error = NotFound(
-                new {Errors = new {InvalidCredentials = "User not found."}});
-            var user = await _users.GetUserByEmail(login.User.Email);
-            if (user == null) return error;
-            var authResult = user.VerifyPassword(login.User.Password);
-            return authResult
+                new
+                {
+                    Errors = new { InvalidCredentials = "User not found." }
+                });
+            var (_, (email, password)) = login;
+            var user = await _users.Authenticate(email, password);
+            return user != null
                 ? Ok(
                     new UserEnvelope(
                         new User(
                             user.Id,
                             user.Email,
                             user.Username,
+                            user.Bio,
+                            user.Image,
                             Token: _jwtIssuer.GenerateJwtToken(user.Id))))
                 : error;
         }

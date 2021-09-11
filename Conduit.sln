@@ -8,8 +8,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conduit.Api", "src\Conduit.Api\Conduit.Api.csproj", "{05209FBD-9E50-4A03-B0A9-AC475E17B4A9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{92F85EFB-A55C-4346-A9E5-3A83E4175755}"
+ProjectSection(SolutionItems) = preProject
+	test.sh = test.sh
+	test.ps1 = test.ps1
+EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conduit.Api.Tests", "test\Conduit.Api.Tests\Conduit.Api.Tests.csproj", "{E6BAFCEE-8AC9-42FD-9BE4-B712AE709B40}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eventuous.Projections.SqlServer", "src\Eventuous.Projections.SqlServer\Eventuous.Projections.SqlServer.csproj", "{24B3778D-83C2-46E3-996F-08FCCBB220F2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,9 +54,22 @@ Global
 		{E6BAFCEE-8AC9-42FD-9BE4-B712AE709B40}.Release|x64.Build.0 = Release|Any CPU
 		{E6BAFCEE-8AC9-42FD-9BE4-B712AE709B40}.Release|x86.ActiveCfg = Release|Any CPU
 		{E6BAFCEE-8AC9-42FD-9BE4-B712AE709B40}.Release|x86.Build.0 = Release|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Debug|x64.Build.0 = Debug|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Debug|x86.Build.0 = Debug|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Release|x64.ActiveCfg = Release|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Release|x64.Build.0 = Release|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Release|x86.ActiveCfg = Release|Any CPU
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{05209FBD-9E50-4A03-B0A9-AC475E17B4A9} = {1222C11B-9930-4757-A9F5-9E173E68E245}
 		{E6BAFCEE-8AC9-42FD-9BE4-B712AE709B40} = {92F85EFB-A55C-4346-A9E5-3A83E4175755}
+		{24B3778D-83C2-46E3-996F-08FCCBB220F2} = {1222C11B-9930-4757-A9F5-9E173E68E245}
 	EndGlobalSection
 EndGlobal

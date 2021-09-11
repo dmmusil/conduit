@@ -8,5 +8,5 @@ namespace Conduit.Api.Features.Articles
         string Title,
         string Description,
         string Body,
-        IEnumerable<string>? Tags);
+        IEnumerable<string> Tags);
 }

@@ -14,5 +14,5 @@ namespace Conduit.Api.Features.Articles.Events
         string? AuthorBio,
         string? AuthorImage,
         DateTime PublishDate,
-        IEnumerable<string>? Tags);
+        IEnumerable<string> Tags);
 }

@@ -7,11 +7,18 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.2" />
-    <PackageReference Include="Eventuous" Version="0.1.1" />
-    <PackageReference Include="Eventuous.EventStoreDB" Version="0.1.1" />
-    <PackageReference Include="Eventuous.EventStoreDB.Subscriptions" Version="0.1.1" />
-    <PackageReference Include="Eventuous.Projections.MongoDB" Version="0.1.1" />
+    <PackageReference Include="Eventuous" Version="0.4.7" />
+    <PackageReference Include="Eventuous.EventStoreDB" Version="0.4.7" />
+    <PackageReference Include="Eventuous.Subscriptions.EventStoreDB" Version="0.4.7" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Eventuous.Projections.SqlServer\Eventuous.Projections.SqlServer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Accounts\Projections" />
   </ItemGroup>
 
 </Project>

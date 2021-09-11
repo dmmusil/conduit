@@ -10,7 +10,9 @@ namespace Conduit.Api.Features.Articles
         public ArticleService(IAggregateStore store) : base(store)
         {
             OnNew<PublishArticle>(
+                cmd => new ArticleId(cmd.ArticleId),
                 (article, cmd) => article.Publish(
+                    new ArticleId(cmd.ArticleId),
                     cmd.Title,
                     cmd.TitleSlug,
                     cmd.Description,

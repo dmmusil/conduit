@@ -1,3 +1,4 @@
+using System;
 using Conduit.Api.Fakes;
 using Conduit.Api.Features.Accounts;
 using Conduit.Api.Features.Accounts.Events;
@@ -20,7 +21,10 @@ namespace Conduit.Api.Tests
         }
 
         public static UserRegistration UserRegistration =>
-            new("jake@jake.jake", "jake", "jakejake");
+            new(Guid.NewGuid().ToString("N"),
+                "jake@jake.jake",
+                "jake",
+                "jakejake");
 
         public static UserLogin UserLogin => new("jake@jake.jake", "jakejake");
     }

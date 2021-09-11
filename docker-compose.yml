@@ -18,15 +18,15 @@ services:
       EVENTSTORE_START_STANDARD_PROJECTIONS: "true"
       EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP: "true"
 
-  mongo:
-    container_name: eventuous-mongo
-    image: mongo
+  sql:
+    container_name: conduit-sql
+    image: mcr.microsoft.com/mssql/server:2019-latest
     ports:
-      - '27017:27017'
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: mongoadmin
-      MONGO_INITDB_ROOT_PASSWORD: secret
-
+      - '1433:1433'
+    environment: 
+      ACCEPT_EULA: Y
+      SA_PASSWORD: P@ssw0rd
+      
 networks:
   default:
     name: eventuous-network

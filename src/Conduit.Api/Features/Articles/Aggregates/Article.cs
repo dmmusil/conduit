@@ -11,15 +11,15 @@ namespace Conduit.Api.Features.Articles.Aggregates
     public class Article : Aggregate<ArticleState, ArticleId>
     {
         public void Publish(
+            ArticleId articleId,
             string title,
             string titleSlug,
             string description,
             string body,
             Author author,
-            IEnumerable<string>? tags)
+            IEnumerable<string> tags)
         {
             EnsureDoesntExist();
-            var articleId = new ArticleId(Guid.NewGuid().ToString("N"));
             Apply(
                 new ArticlePublished(
                     articleId,
@@ -52,7 +52,7 @@ namespace Conduit.Api.Features.Articles.Aggregates
                 Apply(new BodyUpdated(State.Id, body, updatedAt));
         }
 
-        public void Delete() => Apply(new ArticleDeleted(State.Id, State.Tags));
+        public void Delete() => Apply(new ArticleDeleted(State.Id));
 
         public void Favorite(string accountId)
         {
@@ -106,11 +106,11 @@ namespace Conduit.Api.Features.Articles.Aggregates
                 },
                 ArticleFavorited e => this with
                 {
-                    _favoritedBy = _favoritedBy.Add(e.AccountId)
+                    _favoritedBy = _favoritedBy.Add(e.UserId)
                 },
                 ArticleUnfavorited e => this with
                 {
-                    _favoritedBy = _favoritedBy.Remove(e.AccountId)
+                    _favoritedBy = _favoritedBy.Remove(e.UserId)
                 },
                 _ => this
             };

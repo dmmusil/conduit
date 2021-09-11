@@ -7,12 +7,12 @@ namespace Conduit.Api.Features.Accounts.Aggregates
 {
     public class Account : Aggregate<AccountState, AccountId>
     {
-        public void Register(string username, string email, string passwordHash)
+        public void Register(AccountId userId, string username, string email, string passwordHash)
         {
-            if (State.AlreadyRegistered) return;
+            if (State.Registered) return;
             Apply(
                 new UserRegistered(
-                    Guid.NewGuid().ToString("N"),
+                    userId,
                     email,
                     username,
                     passwordHash));
@@ -70,7 +70,8 @@ namespace Conduit.Api.Features.Accounts.Aggregates
                         Id = new AccountId(streamId),
                         Email = email,
                         Username = username,
-                        PasswordHash = passwordHash
+                        PasswordHash = passwordHash,
+                        Registered = true
                     },
                 EmailUpdated(_, var email) => this with {Email = email},
                 UsernameUpdated(_, var username) => this with
@@ -103,11 +104,10 @@ namespace Conduit.Api.Features.Accounts.Aggregates
         public string Username { get; private init; } = null!;
         public string? Bio { get; private init; }
         public string? Image { get; private init; }
-
+        public bool Registered { get; private init; }
+        
         private ImmutableHashSet<string> FollowedProfiles { get; init; } =
             ImmutableHashSet<string>.Empty;
-
-        public bool AlreadyRegistered => Id != null;
 
         public bool AlreadyFollowing(string followedId) =>
             FollowedProfiles.Contains(followedId);
