@@ -21,13 +21,6 @@ namespace Conduit.Api.Features.Articles.Queries
             const string query = @"select * from Articles where TitleSlug=@slug";
             await using var connection = Connection;
             var article = await connection.QueryFirstOrDefaultAsync<ArticleDocument>(query, new {slug});
-            if (article == null) return null;
-            const string favs = "select count(ArticleId) from Favorites where ArticleId=@ArticleId";
-            article = article with
-            {
-                FavoriteCount = await connection.QuerySingleAsync<int>(favs, new {article.ArticleId})
-            };
-            
             return article;
         }
 

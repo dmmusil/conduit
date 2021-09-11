@@ -26,9 +26,11 @@ namespace Conduit.Api.Features.Articles.Projectors
                     new CommandDefinition("delete from Favorites where ArticleId=@ArticleId", e),
                     new CommandDefinition("delete from Articles where ArticleId=@ArticleId", e)),
                 ArticleFavorited e => ArrayOf(
-                    new CommandDefinition("insert into Favorites (ArticleId, UserId) values (@ArticleId, @UserId)", e)),
+                    new CommandDefinition("insert into Favorites (ArticleId, UserId) values (@ArticleId, @UserId)", e),
+                    new CommandDefinition("update Articles set FavoriteCount=FavoriteCount+1 where ArticleId=@ArticleId", e)),
                 ArticleUnfavorited e => ArrayOf(
-                    new CommandDefinition("delete from Favorites where ArticleId=@ArticleId and UserId=@UserId", e)),
+                    new CommandDefinition("delete from Favorites where ArticleId=@ArticleId and UserId=@UserId", e),
+                    new CommandDefinition("update Articles set FavoriteCount=FavoriteCount-1 where ArticleId=@ArticleId", e)),
                 BodyUpdated e => ArrayOf(new CommandDefinition("update Articles set Body=@Body, UpdatedDate=@UpdatedAt where ArticleId=@ArticleId", e)),
                 DescriptionUpdated e => ArrayOf(new CommandDefinition("update Articles set Description=@Description, UpdatedDate=@UpdatedAt where ArticleId=@ArticleId", e)),
                 TitleUpdated e => ArrayOf(new CommandDefinition("update Articles set Title=@Title, TitleSlug=@TitleSlug, UpdatedDate=@UpdatedAt where ArticleId=@ArticleId", e)),
