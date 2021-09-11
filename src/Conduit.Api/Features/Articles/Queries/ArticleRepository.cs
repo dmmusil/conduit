@@ -18,9 +18,17 @@ namespace Conduit.Api.Features.Articles.Queries
 
         public async Task<ArticleDocument?> GetArticleBySlug(string slug)
         {
-            const string query = "select * from Articles where TitleSlug=@slug";
+            const string query = @"select * from Articles where TitleSlug=@slug";
             await using var connection = Connection;
-            return await connection.QueryFirstOrDefaultAsync<ArticleDocument>(query, new {slug});
+            var article = await connection.QueryFirstOrDefaultAsync<ArticleDocument>(query, new {slug});
+            if (article == null) return null;
+            const string favs = "select count(ArticleId) from Favorites where ArticleId=@ArticleId";
+            article = article with
+            {
+                FavoriteCount = await connection.QuerySingleAsync<int>(favs, new {article.ArticleId})
+            };
+            
+            return article;
         }
 
         public async Task<IEnumerable<string>> GetTags()

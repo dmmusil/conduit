@@ -50,7 +50,7 @@ namespace Conduit.Api.Tests.Integration
             await PublishArticle(client);
             await FavoriteArticle(client);
             await UnfavoriteArticle(client);
-            await UpdateArticle(client);
+            // await UpdateArticle(client);
             await GetTags(client, 3);
             await DeleteArticle(client);
             await GetTags(client, 0);
@@ -94,7 +94,8 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task DeleteArticle(HttpClient client)
         {
-            const string slug = "how-not-to-train-your-dragon";
+            // const string slug = "how-not-to-train-your-dragon";
+            const string slug = "how-to-train-your-dragon";
 
             await GetFromProjection(
                 client,

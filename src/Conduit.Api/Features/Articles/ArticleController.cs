@@ -123,6 +123,7 @@ namespace Conduit.Api.Features.Articles
                 return Conflict(
                     $"{update.Article.Title?.ToSlug()} already exists.");
 
+            // set the article ID now that it's known after querying by incoming slug
             update = update with
             {
                 Article = update.Article with {ArticleId = article.ArticleId}

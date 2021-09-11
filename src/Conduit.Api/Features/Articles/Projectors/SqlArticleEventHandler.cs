@@ -23,7 +23,12 @@ namespace Conduit.Api.Features.Articles.Projectors
                 ArticlePublished e => ArrayOf(new ArticleInsertCommand(e).Command, new TagBatchInsert(e).Command),
                 ArticleDeleted e => ArrayOf(
                     new CommandDefinition("delete from Tags where ArticleId=@ArticleId", e),
+                    new CommandDefinition("delete from Favorites where ArticleId=@ArticleId", e),
                     new CommandDefinition("delete from Articles where ArticleId=@ArticleId", e)),
+                ArticleFavorited e => ArrayOf(
+                    new CommandDefinition("insert into Favorites (ArticleId, UserId) values (@ArticleId, @UserId)", e)),
+                ArticleUnfavorited e => ArrayOf(
+                    new CommandDefinition("delete from Favorites where ArticleId=@ArticleId and UserId=@UserId", e)),
                 _ => Array.Empty<CommandDefinition>()
             };
         }
