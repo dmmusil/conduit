@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{92F85EFB-A55C-4346-A9E5-3A83E4175755}"
 ProjectSection(SolutionItems) = preProject
 	test.sh = test.sh
+	test.ps1 = test.ps1
 EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conduit.Api.Tests", "test\Conduit.Api.Tests\Conduit.Api.Tests.csproj", "{E6BAFCEE-8AC9-42FD-9BE4-B712AE709B40}"
