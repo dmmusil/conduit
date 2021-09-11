@@ -31,6 +31,30 @@ namespace Conduit.Api.Features.Articles.Queries
             return await connection.QueryAsync<string>(query);
         }
 
-        public SqlConnection Connection => new SqlConnection(_config.GetConnectionString("ReadModels"));
+        private SqlConnection Connection => new SqlConnection(_config.GetConnectionString("ReadModels"));
+
+        public async Task<IEnumerable<ArticleDocument>> GetArticlesFromFollowedUsers(string userId)
+        {
+            const string query = @"
+            select 
+                   a.ArticleId
+                 , a.Title
+                 , a.TitleSlug
+                 , a.Description
+                 , a.Body
+                 , a.AuthorId
+                 , a.AuthorUsername
+                 , a.AuthorBio
+                 , a.AuthorImage
+                 , a.PublishDate
+                 , a.UpdatedDate
+                 , a.FavoriteCount 
+            from Articles as a
+            join Followers as f on f.FollowedUserId = a.AuthorId
+            where f.FollowingUserId = @Id
+            ";
+            await using var connection = Connection;
+            return await connection.QueryAsync<ArticleDocument>(query, new {Id = userId});
+        }
     }
 }

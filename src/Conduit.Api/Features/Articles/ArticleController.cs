@@ -26,31 +26,15 @@ namespace Conduit.Api.Features.Articles
             (_userRepository, _svc, _articleRepository) =
             (userRepository, svc, articleRepository);
 
-        [HttpGet, HttpGet("feed")]
-        public IActionResult GetAll() =>
-            Ok(
-                new
-                {
-                    Articles = new[]
-                    {
-                        new ArticleResponse(
-                            "Title",
-                            "title",
-                            "Desc",
-                            "Body",
-                            new Author(
-                                "abc",
-                                "jake",
-                                "I work at state farm",
-                                null,
-                                false),
-                            DateTime.UtcNow,
-                            null,
-                            false,
-                            0,
-                            new[] {"state farm"})
-                    }
-                });
+        [HttpGet, HttpGet("feed"), Authorize]
+        public async Task<IActionResult> GetAll()
+        {
+            var articles =
+                await _articleRepository.GetArticlesFromFollowedUsers(
+                    HttpContext.GetLoggedInUser().Id);
+
+            return Ok(new {Articles = articles});
+        }
 
         [HttpPost]
         [Authorize]
