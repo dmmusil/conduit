@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <None Remove="SQL\Accounts.sql" />
+      <EmbeddedResource Include="SQL\Accounts.sql" />
+      <None Remove="SQL\Articles.sql" />
+      <EmbeddedResource Include="SQL\Articles.sql" />
+      <None Remove="SQL\Checkpoints.sql" />
+      <EmbeddedResource Include="SQL\Checkpoints.sql" />
+      <None Remove="SQL\Favorites.sql" />
+      <EmbeddedResource Include="SQL\Favorites.sql" />
+      <None Remove="SQL\Followers.sql" />
+      <EmbeddedResource Include="SQL\Followers.sql" />
+      <None Remove="SQL\Tags.sql" />
+      <EmbeddedResource Include="SQL\Tags.sql" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Dapper" Version="2.0.90" />
+      <PackageReference Include="dbup-sqlserver" Version="4.5.0" />
+      <PackageReference Include="Microsoft.Data.SqlClient" Version="3.0.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Eventuous.Projections.SqlServer\Eventuous.Projections.SqlServer.csproj" />
+    </ItemGroup>
+
+</Project>

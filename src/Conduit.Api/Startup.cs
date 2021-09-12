@@ -8,6 +8,7 @@ using Conduit.Api.Features.Articles;
 using Conduit.Api.Features.Articles.Events;
 using Conduit.Api.Features.Articles.Projectors;
 using Conduit.Api.Features.Articles.Queries;
+using Conduit.ReadModels;
 using EventStore.Client;
 using Eventuous;
 using Eventuous.EventStoreDB;
@@ -47,6 +48,7 @@ namespace Conduit.Api
                 .AddScoped<IDbConnection>(o =>
                     new SqlConnection(o.GetService<IConfiguration>()
                         .GetConnectionString("ReadModels")))
+                .AddSingleton<ISchemaManagement, SchemaManagement>()
                 .AddCors()
                 .AddControllers();
 

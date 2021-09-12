@@ -18,7 +18,9 @@ namespace Conduit.Api.Features.Articles.Queries
 
         public async Task<ArticleDocument?> GetArticleBySlug(string slug)
         {
-            const string query = @"select * from Articles where TitleSlug=@slug";
+            const string query = @"
+select * from Articles where TitleSlug=@slug
+";
             await using var connection = Connection;
             var article = await connection.QueryFirstOrDefaultAsync<ArticleDocument>(query, new {slug});
             return article;
@@ -52,6 +54,7 @@ namespace Conduit.Api.Features.Articles.Queries
             from Articles as a
             join Followers as f on f.FollowedUserId = a.AuthorId
             where f.FollowingUserId = @Id
+            order by a.PublishDate desc
             ";
             await using var connection = Connection;
             return await connection.QueryAsync<ArticleDocument>(query, new {Id = userId});

@@ -11,12 +11,12 @@ namespace Eventuous.Projections.SqlServer
 {
     public class SqlServerCheckpointStore : ICheckpointStore
     {
-        private readonly IConfiguration _config;
+        private readonly ISchemaManagement _manager;
         private readonly string _connectionString;
 
-        public SqlServerCheckpointStore(IConfiguration config)
+        public SqlServerCheckpointStore(IConfiguration config, ISchemaManagement manager)
         {
-            _config = config;
+            _manager = manager;
             _connectionString = config.GetConnectionString("ReadModels");
         }
 
@@ -26,7 +26,7 @@ namespace Eventuous.Projections.SqlServer
         {
             await using var connection = new SqlConnection(_connectionString);
 
-            await new SchemaManagement(_config).CreateSchemaOnce();
+            await _manager.CreateSchemaOnce();
             
             const string query = @"
             select Position 
@@ -62,5 +62,10 @@ end
                 new { checkpoint.Id, Position = (long?)checkpoint.Position });
             return checkpoint;
         }
+    }
+
+    public interface ISchemaManagement
+    {
+        Task CreateSchemaOnce();
     }
 }
