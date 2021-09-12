@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -12,7 +13,12 @@ using Conduit.Api.Features.Accounts;
 using Conduit.Api.Features.Accounts.Commands;
 using Conduit.Api.Features.Articles;
 using Conduit.Api.Features.Articles.Commands;
+using Conduit.Api.Features.Articles.Events;
+using Conduit.Api.Features.Articles.Projectors;
+using Dapper;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Conduit.Api.Tests.Integration
@@ -33,19 +39,23 @@ namespace Conduit.Api.Tests.Integration
         public async Task Can_register_login_and_retrieve_current_user()
         {
             var client = _factory.CreateClient();
+            var config = _factory.Services.GetService<IConfiguration>();
 
             var accountId = await Register(client);
             var token = await Login(client, accountId);
             await Verify(client, token);
             await Update(client, token);
             await AttemptRegisterDuplicate(client);
-            await RegisterUniqueUser(client);
+            var uniqueId = await RegisterUniqueUser(client);
             await AttemptUpdateDuplicate(client, token!);
 
             await GetProfile(client);
 
             await Follow(client, UniqueUsername);
+            await GenerateFeed(uniqueId, config!);
+            await LoadFeed(client, 1);
             await Unfollow(client, UniqueUsername);
+            await LoadFeed(client, 0);
 
             await PublishArticle(client);
             await FavoriteArticle(client);
@@ -54,6 +64,30 @@ namespace Conduit.Api.Tests.Integration
             await GetTags(client, 3);
             await DeleteArticle(client);
             await GetTags(client, 0);
+        }
+
+        private async Task LoadFeed(HttpClient client, int expectedCount)
+        {
+            var response = await client.GetAsync("/api/articles/feed");
+            var feed = await response.Content.ReadFromJsonAsync<FeedEnvelope>();
+            Assert.Equal(expectedCount, feed!.Articles.Count());
+        }
+
+        private async Task GenerateFeed(string uniqueId,
+            IConfiguration configuration)
+        {
+            // add an article by the followed user to appear in the test user's feed
+            var articleInsert = new ArticleInsertCommand(
+                new ArticlePublished(Guid.NewGuid().ToString("N"), "Follow me",
+                    "Follow me".ToSlug(), "Follow me", "Follow me", uniqueId,
+                    UniqueUsername, null, null, DateTime.UtcNow,
+                    new[] { "doesn't matter" }));    
+            
+            await using var connection =
+                new SqlConnection(
+                    configuration.GetConnectionString("ReadModels"));
+            
+            await connection.ExecuteAsync(articleInsert.Command);
         }
 
         private async Task GetTags(HttpClient client, int expectedCount)
@@ -282,7 +316,7 @@ namespace Conduit.Api.Tests.Integration
                 expectedResponseCode: HttpStatusCode.Conflict);
         }
 
-        private static async Task RegisterUniqueUser(HttpClient client)
+        private static async Task<string> RegisterUniqueUser(HttpClient client)
         {
             var command = new Register(
                 Fixtures.UserRegistration with
@@ -290,7 +324,9 @@ namespace Conduit.Api.Tests.Integration
                     Email = UniqueEmail, Username = UniqueUsername
                 });
             var response = await SendCommand(client, command, "/api/users");
-            await response.Content.ReadFromJsonAsync<UserEnvelope>();
+            var envelope = await response.Content.ReadFromJsonAsync<UserEnvelope>();
+
+            return envelope!.User.Id;
         }
 
         private static async Task AttemptRegisterDuplicate(HttpClient client)

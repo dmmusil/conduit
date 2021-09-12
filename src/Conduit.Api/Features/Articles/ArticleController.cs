@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Conduit.Api.Auth;
@@ -33,7 +34,7 @@ namespace Conduit.Api.Features.Articles
                 await _articleRepository.GetArticlesFromFollowedUsers(
                     HttpContext.GetLoggedInUser().Id);
 
-            return Ok(new {Articles = articles});
+            return Ok(new FeedEnvelope(articles));
         }
 
         [HttpPost]
@@ -183,4 +184,6 @@ namespace Conduit.Api.Features.Articles
 
 
     public record UpdateEnvelope(UpdateArticle Article);
+
+    public record FeedEnvelope(IEnumerable<ArticleDocument> Articles);
 }
