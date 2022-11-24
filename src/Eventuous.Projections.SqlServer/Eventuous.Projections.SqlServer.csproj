@@ -10,7 +10,7 @@
       <PackageReference Include="Eventuous.EventStoreDB" Version="0.4.7" />
       <PackageReference Include="Eventuous.Subscriptions" Version="0.4.7" />
       <PackageReference Include="Eventuous.Subscriptions.EventStoreDB" Version="0.4.7" />
-      <PackageReference Include="Microsoft.Data.SqlClient" Version="3.0.0" />
+      <PackageReference Include="Microsoft.Data.SqlClient" Version="5.0.1" />
     </ItemGroup>
 
 </Project>
