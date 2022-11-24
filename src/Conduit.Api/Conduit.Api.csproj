@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.2" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Eventuous" Version="0.4.7" />
     <PackageReference Include="Eventuous.EventStoreDB" Version="0.4.7" />
     <PackageReference Include="Eventuous.Subscriptions.EventStoreDB" Version="0.4.7" />
