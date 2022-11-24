@@ -18,7 +18,6 @@ namespace Eventuous.Projections.SqlServer
             EventSubscriptionWithCheckpoint<AllStreamSubscriptionOptions>
     {
         private readonly ILogger _log;
-        private readonly SubscriptionOptions _options;
         private readonly EventStoreClient _eventStoreClient;
         private StreamSubscription _sub;
 
@@ -27,10 +26,11 @@ namespace Eventuous.Projections.SqlServer
             ICheckpointStore checkpointStore,
             ConsumePipe consumePipe,
             int concurrencyLimit,
-            ILoggerFactory? loggerFactory,
+            ILoggerFactory loggerFactory,
             EventStoreClient eventStoreClient) : base(options, checkpointStore, consumePipe, 1, loggerFactory)
         {
             _eventStoreClient = eventStoreClient;
+            _log = loggerFactory.CreateLogger<TransactionalAllStreamSubscriptionService>();
         }
 
         protected override async ValueTask Subscribe(CancellationToken cancellationToken)
