@@ -1,39 +1,35 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using EventStore.Client;
 using Eventuous.Subscriptions;
-using Eventuous.Subscriptions.EventStoreDB;
+using Eventuous.Subscriptions.Checkpoints;
+using Eventuous.Subscriptions.Filters;
 using Microsoft.Extensions.Logging;
-using StreamSubscription = EventStore.Client.StreamSubscription;
 
 namespace Eventuous.Projections.SqlServer
 {
     public class
         TransactionalAllStreamSubscriptionService :
-            EventStoreSubscriptionService
+            EventSubscriptionWithCheckpoint<SubscriptionOptions>
     {
         private readonly ILogger _log;
+        private readonly SubscriptionOptions _options;
+        private readonly EventStoreClient _eventStoreClient;
 
         public TransactionalAllStreamSubscriptionService(
-            EventStoreClient eventStoreClient,
-            EventStoreSubscriptionOptions options,
+            SubscriptionOptions options,
             ICheckpointStore checkpointStore,
-            IEnumerable<IEventHandler> eventHandlers,
-            IEventSerializer? eventSerializer = null,
-            ILoggerFactory? loggerFactory = null,
-            ISubscriptionGapMeasure? measure = null) : base(eventStoreClient,
-            options, checkpointStore, eventHandlers, eventSerializer,
-            loggerFactory, measure)
+            ConsumePipe consumePipe,
+            int concurrencyLimit,
+            ILoggerFactory? loggerFactory,
+            EventStoreClient eventStoreClient) : base(options, checkpointStore, consumePipe, concurrencyLimit, loggerFactory)
         {
-            _log = loggerFactory.CreateLogger(GetType());
+            _eventStoreClient = eventStoreClient;
         }
 
-        protected override async Task<EventSubscription> Subscribe(
-            Checkpoint checkpoint,
-            CancellationToken cancellationToken)
+        protected override async ValueTask Subscribe(CancellationToken cancellationToken)
         {
             var filterOptions = new SubscriptionFilterOptions(
                 EventTypeFilter.ExcludeSystemEvents(),
@@ -43,18 +39,17 @@ namespace Eventuous.Projections.SqlServer
                         new EventPosition(p.CommitPosition, DateTime.UtcNow),
                         ct));
 
-            var (_, position) = checkpoint;
+            var (_, position) = await GetCheckpoint(cancellationToken).NoContext();
             var subscribeTask = position != null
-                ? EventStoreClient.SubscribeToAllAsync(
-                    new Position(
-                        position.Value,
-                        position.Value),
+                ? _eventStoreClient.SubscribeToAllAsync(
+                    FromAll.After(new Position(position.Value, position.Value)),
                     TransactionalHandler,
                     false,
                     HandleDrop,
                     filterOptions,
                     cancellationToken: cancellationToken)
-                : EventStoreClient.SubscribeToAllAsync(
+                : _eventStoreClient.SubscribeToAllAsync(
+                    FromAll.Start,
                     TransactionalHandler,
                     false,
                     HandleDrop,
@@ -62,9 +57,11 @@ namespace Eventuous.Projections.SqlServer
                     cancellationToken: cancellationToken);
 
             var sub = await subscribeTask.NoContext();
+        }
 
-            return new EventSubscription(SubscriptionId,
-                new Stoppable(() => sub.Dispose()));
+        protected override ValueTask Unsubscribe(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
 
         private void HandleDrop(

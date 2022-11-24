@@ -1,9 +1,7 @@
-﻿using System;
-using System.Data;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
-using Eventuous.Subscriptions;
+using Eventuous.Subscriptions.Checkpoints;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
@@ -43,6 +41,7 @@ namespace Eventuous.Projections.SqlServer
 
         public async ValueTask<Checkpoint> StoreCheckpoint(
             Checkpoint checkpoint,
+            bool force,
             CancellationToken cancellationToken = new CancellationToken())
         {
             await using var connection = new SqlConnection(_connectionString);
