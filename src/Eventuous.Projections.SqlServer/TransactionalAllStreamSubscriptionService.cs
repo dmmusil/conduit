@@ -20,6 +20,7 @@ namespace Eventuous.Projections.SqlServer
         private readonly ILogger _log;
         private readonly SubscriptionOptions _options;
         private readonly EventStoreClient _eventStoreClient;
+        private StreamSubscription _sub;
 
         public TransactionalAllStreamSubscriptionService(
             AllStreamSubscriptionOptions options,
@@ -59,12 +60,13 @@ namespace Eventuous.Projections.SqlServer
                     filterOptions,
                     cancellationToken: cancellationToken);
 
-            var sub = await subscribeTask.NoContext();
+            _sub = await subscribeTask.NoContext();
         }
 
         protected override ValueTask Unsubscribe(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            _sub.Dispose();
+            return ValueTask.CompletedTask;
         }
 
         private void HandleDrop(
