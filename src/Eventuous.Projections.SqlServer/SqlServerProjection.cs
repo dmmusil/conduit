@@ -16,9 +16,8 @@ namespace Eventuous.Projections.SqlServer
         protected readonly ILogger _log;
 
         protected SqlServerProjection(IConfiguration configuration,
-            string subscriptionId, ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory)
         {
-            SubscriptionId = subscriptionId;
             _connectionString = configuration.GetConnectionString("ReadModels");
             _log = loggerFactory.CreateLogger(GetType());
         }
@@ -59,8 +58,6 @@ namespace Eventuous.Projections.SqlServer
             context.Ack(GetType().Name);
             return EventHandlingStatus.Success;
         }
-
-        public string SubscriptionId { get; }
 
         public string DiagnosticName => throw new NotImplementedException();
     }
