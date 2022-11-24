@@ -59,6 +59,6 @@ namespace Eventuous.Projections.SqlServer
             return EventHandlingStatus.Success;
         }
 
-        public string DiagnosticName => throw new NotImplementedException();
+        public string DiagnosticName => GetType().Name;
     }
 }
