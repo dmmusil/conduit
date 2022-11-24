@@ -42,7 +42,7 @@ namespace Conduit.Api.Features.Accounts
 
         public async Task<User> Load(string userId)
         {
-            var account = await _store.Load<Account>(new AccountId(userId), CancellationToken.None);
+            var account = await _store.Load<Account>(new StreamName(userId), CancellationToken.None);
             var state = account.State;
             return new User(userId, state.Email, state.Username, state.Bio, state.Image);
         }

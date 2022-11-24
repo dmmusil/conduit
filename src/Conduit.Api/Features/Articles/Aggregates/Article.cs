@@ -8,7 +8,7 @@ namespace Conduit.Api.Features.Articles.Aggregates
 {
     public record ArticleId(string Value) : AggregateId(Value);
 
-    public class Article : Aggregate<ArticleState, ArticleId>
+    public class Article : Aggregate<ArticleState>
     {
         public void Publish(
             ArticleId articleId,
@@ -67,7 +67,7 @@ namespace Conduit.Api.Features.Articles.Aggregates
         }
     }
 
-    public record ArticleState : AggregateState<ArticleState, ArticleId>
+    public record ArticleState : AggregateState<ArticleState>
     {
         public override ArticleState When(object @event) =>
             @event switch
@@ -115,6 +115,7 @@ namespace Conduit.Api.Features.Articles.Aggregates
                 _ => this
             };
 
+        public ArticleId Id { get; private set; } = null!;
         public IEnumerable<string>? Tags { get; init; }
         public DateTime CreatedAt { get; private init; }
         public DateTime? UpdatedAt { get; private init; }

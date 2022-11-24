@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using EventStore.Client;
+using Eventuous.EventStore.Subscriptions;
 using Eventuous.Subscriptions;
 using Eventuous.Subscriptions.Checkpoints;
 using Eventuous.Subscriptions.Filters;
@@ -12,14 +13,14 @@ namespace Eventuous.Projections.SqlServer
 {
     public class
         TransactionalAllStreamSubscriptionService :
-            EventSubscriptionWithCheckpoint<SubscriptionOptions>
+            EventSubscriptionWithCheckpoint<AllStreamSubscriptionOptions>
     {
         private readonly ILogger _log;
         private readonly SubscriptionOptions _options;
         private readonly EventStoreClient _eventStoreClient;
 
         public TransactionalAllStreamSubscriptionService(
-            SubscriptionOptions options,
+            AllStreamSubscriptionOptions options,
             ICheckpointStore checkpointStore,
             ConsumePipe consumePipe,
             int concurrencyLimit,

@@ -11,17 +11,16 @@ using Conduit.Api.Features.Articles.Queries;
 using Conduit.ReadModels;
 using EventStore.Client;
 using Eventuous;
-using Eventuous.EventStoreDB;
+using Eventuous.EventStore;
+using Eventuous.EventStore.Subscriptions;
 using Eventuous.Projections.SqlServer;
-using Eventuous.Subscriptions;
-using Eventuous.Subscriptions.EventStoreDB;
+using Eventuous.Subscriptions.Checkpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Conduit.Api
 {
@@ -57,23 +56,12 @@ namespace Conduit.Api
 
             services.AddSingleton<ICheckpointStore, SqlServerCheckpointStore>();
 
-            services.AddSingleton(o =>
-                new TransactionalAllStreamSubscriptionService(
-                    o.GetService<EventStoreClient>()!,
-                    new AllStreamSubscriptionOptions
-                        {SubscriptionId = "ConduitSql"},
-                    o.GetService<ICheckpointStore>()!, new IEventHandler[]
-                    {
-                        new SqlArticleEventHandler(
-                            o.GetService<IConfiguration>()!, "ConduitSql",
-                            o.GetService<ILoggerFactory>()!),
-                        new SqlAccountsEventHandler(
-                            o.GetService<IConfiguration>()!, "ConduitSql",
-                            o.GetService<ILoggerFactory>()!)
-                    }, o.GetService<IEventSerializer>()!,
-                    o.GetService<ILoggerFactory>()));
-
-            services.AddHostedService(o => o.GetService<TransactionalAllStreamSubscriptionService>());
+            services.AddSubscription<TransactionalAllStreamSubscriptionService, AllStreamSubscriptionOptions>(
+                "ConduitSql",
+                builder => builder
+                .AddEventHandler<SqlArticleEventHandler>()
+                .AddEventHandler<SqlAccountsEventHandler>()
+            );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
