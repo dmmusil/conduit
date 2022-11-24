@@ -36,7 +36,6 @@ namespace Conduit.Api
                         EventStoreClientSettings.Create(
                             "esdb://admin:changeit@localhost:2113?tls=false")))
                 .AddSingleton<IEventStore, EsdbEventStore>()
-                .AddSingleton(DefaultEventSerializer.Instance)
                 .AddSingleton<AppSettings>()
                 .AddScoped<IAggregateStore, AggregateStore>()
                 .AddScoped<UserService>()
@@ -51,8 +50,7 @@ namespace Conduit.Api
                 .AddCors()
                 .AddControllers();
 
-            AccountsRegistration.Register();
-            ArticlesRegistration.Register();
+            
 
             services.AddSingleton<ICheckpointStore, SqlServerCheckpointStore>();
 

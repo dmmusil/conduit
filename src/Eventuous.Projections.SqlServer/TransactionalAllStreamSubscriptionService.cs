@@ -27,7 +27,7 @@ namespace Eventuous.Projections.SqlServer
             ConsumePipe consumePipe,
             int concurrencyLimit,
             ILoggerFactory? loggerFactory,
-            EventStoreClient eventStoreClient) : base(options, checkpointStore, consumePipe, concurrencyLimit, loggerFactory)
+            EventStoreClient eventStoreClient) : base(options, checkpointStore, consumePipe, 1, loggerFactory)
         {
             _eventStoreClient = eventStoreClient;
         }

@@ -12,7 +12,6 @@ namespace Conduit.Api.Tests
         {
             get
             {
-                AccountsRegistration.Register();
                 var aggregateStore = new AggregateStore(new InMemoryEventStore());
                 return new UserService(aggregateStore);
             }
