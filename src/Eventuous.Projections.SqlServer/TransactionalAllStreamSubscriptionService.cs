@@ -6,8 +6,10 @@ using EventStore.Client;
 using Eventuous.EventStore.Subscriptions;
 using Eventuous.Subscriptions;
 using Eventuous.Subscriptions.Checkpoints;
+using Eventuous.Subscriptions.Context;
 using Eventuous.Subscriptions.Filters;
 using Microsoft.Extensions.Logging;
+using StreamSubscription = EventStore.Client.StreamSubscription;
 
 namespace Eventuous.Projections.SqlServer
 {
@@ -86,10 +88,25 @@ namespace Eventuous.Projections.SqlServer
         {
             try
             {
-                _log.LogDebug($"Subscription {SubscriptionId} got an event {e.Event.EventType}");
+                var evt = e.Event;
+                _log.LogDebug($"Subscription {SubscriptionId} got an event {evt.EventType}");
                 using var tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-                await Handler(AsReceivedEvent(e), ct);
+                var context = new MessageConsumeContext(
+                    evt.EventId.ToString(),
+                    evt.EventType,
+                    "application/json",
+                    evt.EventStreamId,
+                    evt.EventNumber,
+                    evt.Position.CommitPosition,
+                    evt.Position.CommitPosition,
+                    evt.Created,
+                    e,
+                    Options.MetadataSerializer.DeserializeMeta(Options, evt.Metadata, e.OriginalStreamId),
+                    SubscriptionId,
+                    ct
+                );
+                await Handler(context);
 
                 tx.Complete();
             }
@@ -97,29 +114,6 @@ namespace Eventuous.Projections.SqlServer
             {
                 _log.LogError(exception.ToString());
                 throw;
-            }
-
-            ReceivedEvent AsReceivedEvent(ResolvedEvent re)
-            {
-                var evt = DeserializeData(
-                    re.Event.ContentType,
-                    re.Event.EventType,
-                    re.Event.Data,
-                    re.Event.EventStreamId,
-                    re.Event.EventNumber
-                );
-
-                return new ReceivedEvent(
-                    re.Event.EventId.ToString(),
-                    re.Event.EventType,
-                    re.Event.ContentType,
-                    re.Event.Position.CommitPosition,
-                    re.Event.Position.CommitPosition,
-                    re.OriginalStreamId,
-                    re.Event.EventNumber,
-                    re.Event.Created,
-                    evt
-                );
             }
         }
     }

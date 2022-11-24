@@ -36,7 +36,8 @@ namespace Conduit.Api.Features.Accounts
 
             var token = user.Token;
             update = update with {StreamId = user.Id};
-            var (state, _) = await _svc.Handle(update, CancellationToken.None);
+            var result = await _svc.Handle(update, CancellationToken.None);
+            var state = result.State;
             return Ok(
                 new UserEnvelope(
                     new User(
