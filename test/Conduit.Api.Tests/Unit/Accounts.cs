@@ -16,7 +16,7 @@ namespace Conduit.Api.Tests.Unit
                 new Features.Accounts.Commands.Register(user),
                 CancellationToken.None);
 
-            var actual = result.State;
+            var actual = result.State!;
             Assert.Equal(user.Email, actual.Email);
             Assert.Equal(user.Username, actual.Username);
             Assert.True(
