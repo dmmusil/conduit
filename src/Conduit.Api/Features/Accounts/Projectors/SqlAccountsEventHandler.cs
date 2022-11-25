@@ -10,9 +10,8 @@ namespace Conduit.Api.Features.Accounts.Projectors
     public class SqlAccountsEventHandler : SqlServerProjection
     {
         public SqlAccountsEventHandler(
-            IConfiguration configuration,
-            string subscriptionId, ILoggerFactory loggerFactory) : base(
-            configuration, subscriptionId, loggerFactory)
+            IConfiguration configuration, ILoggerFactory loggerFactory) : base(
+            configuration, loggerFactory)
         {
         }
 

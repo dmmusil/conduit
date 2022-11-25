@@ -5,7 +5,7 @@ using Eventuous;
 
 namespace Conduit.Api.Features.Accounts.Aggregates
 {
-    public class Account : Aggregate<AccountState, AccountId>
+    public class Account : Aggregate<AccountState>
     {
         public void Register(AccountId userId, string username, string email, string passwordHash)
         {
@@ -58,7 +58,7 @@ namespace Conduit.Api.Features.Accounts.Aggregates
 
     public record AccountId(string Value) : AggregateId(Value);
 
-    public record AccountState : AggregateState<AccountState, AccountId>
+    public record AccountState : AggregateState<AccountState>
     {
         public override AccountState When(object @event)
         {
@@ -99,6 +99,7 @@ namespace Conduit.Api.Features.Accounts.Aggregates
             };
         }
 
+        public AccountId Id { get; private set; } = null!;
         public string PasswordHash { get; private init; } = null!;
         public string Email { get; private init; } = null!;
         public string Username { get; private init; } = null!;

@@ -66,6 +66,19 @@ namespace Conduit.Api.Fakes
             return Task.CompletedTask;
         }
 
+        public Task<bool> StreamExists(StreamName stream, CancellationToken cancellationToken)
+        {
+            try
+            {
+                _ = FindStream(stream);
+                return Task.FromResult(true);
+            }
+            catch
+            {
+                return Task.FromResult(false);
+            }
+        }
+
         public Task TruncateStream(
             StreamName stream,
             StreamTruncatePosition truncatePosition,

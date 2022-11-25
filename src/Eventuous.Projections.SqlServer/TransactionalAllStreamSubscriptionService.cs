@@ -1,11 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using EventStore.Client;
+using Eventuous.EventStore.Subscriptions;
 using Eventuous.Subscriptions;
-using Eventuous.Subscriptions.EventStoreDB;
+using Eventuous.Subscriptions.Checkpoints;
+using Eventuous.Subscriptions.Context;
+using Eventuous.Subscriptions.Filters;
 using Microsoft.Extensions.Logging;
 using StreamSubscription = EventStore.Client.StreamSubscription;
 
@@ -13,27 +15,24 @@ namespace Eventuous.Projections.SqlServer
 {
     public class
         TransactionalAllStreamSubscriptionService :
-            EventStoreSubscriptionService
+            EventSubscriptionWithCheckpoint<AllStreamSubscriptionOptions>
     {
         private readonly ILogger _log;
+        private readonly EventStoreClient _eventStoreClient;
+        private StreamSubscription _sub;
 
         public TransactionalAllStreamSubscriptionService(
-            EventStoreClient eventStoreClient,
-            EventStoreSubscriptionOptions options,
+            AllStreamSubscriptionOptions options,
             ICheckpointStore checkpointStore,
-            IEnumerable<IEventHandler> eventHandlers,
-            IEventSerializer? eventSerializer = null,
-            ILoggerFactory? loggerFactory = null,
-            ISubscriptionGapMeasure? measure = null) : base(eventStoreClient,
-            options, checkpointStore, eventHandlers, eventSerializer,
-            loggerFactory, measure)
+            ConsumePipe consumePipe,
+            ILoggerFactory loggerFactory,
+            EventStoreClient eventStoreClient) : base(options, checkpointStore, consumePipe, 1, loggerFactory)
         {
-            _log = loggerFactory.CreateLogger(GetType());
+            _eventStoreClient = eventStoreClient;
+            _log = loggerFactory.CreateLogger<TransactionalAllStreamSubscriptionService>();
         }
 
-        protected override async Task<EventSubscription> Subscribe(
-            Checkpoint checkpoint,
-            CancellationToken cancellationToken)
+        protected override async ValueTask Subscribe(CancellationToken cancellationToken)
         {
             var filterOptions = new SubscriptionFilterOptions(
                 EventTypeFilter.ExcludeSystemEvents(),
@@ -43,28 +42,27 @@ namespace Eventuous.Projections.SqlServer
                         new EventPosition(p.CommitPosition, DateTime.UtcNow),
                         ct));
 
-            var (_, position) = checkpoint;
-            var subscribeTask = position != null
-                ? EventStoreClient.SubscribeToAllAsync(
-                    new Position(
-                        position.Value,
-                        position.Value),
-                    TransactionalHandler,
-                    false,
-                    HandleDrop,
-                    filterOptions,
-                    cancellationToken: cancellationToken)
-                : EventStoreClient.SubscribeToAllAsync(
-                    TransactionalHandler,
-                    false,
-                    HandleDrop,
-                    filterOptions,
-                    cancellationToken: cancellationToken);
+            var (_, position) = await GetCheckpoint(cancellationToken).NoContext();
 
-            var sub = await subscribeTask.NoContext();
+            var from = position != null
+                ? FromAll.After(new Position(position.Value, position.Value))
+                : FromAll.Start;
 
-            return new EventSubscription(SubscriptionId,
-                new Stoppable(() => sub.Dispose()));
+            var subscribeTask = _eventStoreClient.SubscribeToAllAsync(
+                from,
+                TransactionalHandler,
+                false,
+                HandleDrop,
+                filterOptions,
+                cancellationToken: cancellationToken);
+
+            _sub = await subscribeTask.NoContext();
+        }
+
+        protected override ValueTask Unsubscribe(CancellationToken cancellationToken)
+        {
+            _sub.Dispose();
+            return ValueTask.CompletedTask;
         }
 
         private void HandleDrop(
@@ -74,6 +72,8 @@ namespace Eventuous.Projections.SqlServer
         {
             _log.LogWarning($"Subscription {SubscriptionId} dropped. Reason: {arg2}");
         }
+
+        private ulong _sequence;
 
         /// <summary>
         /// Wrap event handling and checkpoint updates in a transaction.
@@ -88,40 +88,36 @@ namespace Eventuous.Projections.SqlServer
         {
             try
             {
-                _log.LogDebug($"Subscription {SubscriptionId} got an event {e.Event.EventType}");
-                using var tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+                var evt = e.Event;
+                var result =
+                    DefaultEventSerializer.Instance.DeserializeEvent(evt.Data.Span, evt.EventType, "application/json");
+                object? message = null;
+                if (result is SuccessfullyDeserialized s)
+                {
+                    message = s.Payload;
+                }
+                _log.LogDebug($"Subscription {SubscriptionId} got an event {evt.EventType}");
+                var context = new MessageConsumeContext(
+                    evt.EventId.ToString(),
+                    evt.EventType,
+                    "application/json",
+                    evt.EventStreamId,
+                    evt.EventNumber,
+                    evt.Position.CommitPosition,
+                    _sequence++,
+                    evt.Created,
+                    message,
+                    Options.MetadataSerializer.DeserializeMeta(Options, evt.Metadata, e.OriginalStreamId),
+                    SubscriptionId,
+                    ct
+                );
 
-                await Handler(AsReceivedEvent(e), ct);
-
-                tx.Complete();
+                await HandleInternal(context);
             }
             catch (Exception exception)
             {
                 _log.LogError(exception.ToString());
                 throw;
-            }
-
-            ReceivedEvent AsReceivedEvent(ResolvedEvent re)
-            {
-                var evt = DeserializeData(
-                    re.Event.ContentType,
-                    re.Event.EventType,
-                    re.Event.Data,
-                    re.Event.EventStreamId,
-                    re.Event.EventNumber
-                );
-
-                return new ReceivedEvent(
-                    re.Event.EventId.ToString(),
-                    re.Event.EventType,
-                    re.Event.ContentType,
-                    re.Event.Position.CommitPosition,
-                    re.Event.Position.CommitPosition,
-                    re.OriginalStreamId,
-                    re.Event.EventNumber,
-                    re.Event.Created,
-                    evt
-                );
             }
         }
     }

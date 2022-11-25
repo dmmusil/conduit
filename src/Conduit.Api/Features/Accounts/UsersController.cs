@@ -34,8 +34,8 @@ namespace Conduit.Api.Features.Accounts
             if (await _users.UsernameExists(register.User.Username))
                 return Conflict("Username already taken");
 
-            var (state, _) =
-                await _svc.Handle(register, CancellationToken.None);
+            var result = await _svc.Handle(register, CancellationToken.None);
+            var state = result.State;
             return Ok(
                 new UserEnvelope(
                     new User(

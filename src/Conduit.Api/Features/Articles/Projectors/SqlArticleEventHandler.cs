@@ -11,8 +11,8 @@ namespace Conduit.Api.Features.Articles.Projectors
 {
     public class SqlArticleEventHandler : SqlServerProjection
     {
-        public SqlArticleEventHandler(IConfiguration configuration, string subscriptionId, ILoggerFactory loggerFactory)
-            : base(configuration, subscriptionId, loggerFactory)
+        public SqlArticleEventHandler(IConfiguration configuration, ILoggerFactory loggerFactory)
+            : base(configuration, loggerFactory)
         {
         }
 

@@ -1,27 +1,24 @@
 using System.Data;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts;
-using Conduit.Api.Features.Accounts.Events;
 using Conduit.Api.Features.Accounts.Projectors;
 using Conduit.Api.Features.Accounts.Queries;
 using Conduit.Api.Features.Articles;
-using Conduit.Api.Features.Articles.Events;
 using Conduit.Api.Features.Articles.Projectors;
 using Conduit.Api.Features.Articles.Queries;
 using Conduit.ReadModels;
 using EventStore.Client;
 using Eventuous;
-using Eventuous.EventStoreDB;
+using Eventuous.EventStore;
+using Eventuous.EventStore.Subscriptions;
 using Eventuous.Projections.SqlServer;
-using Eventuous.Subscriptions;
-using Eventuous.Subscriptions.EventStoreDB;
+using Eventuous.Subscriptions.Checkpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Conduit.Api
 {
@@ -37,7 +34,6 @@ namespace Conduit.Api
                         EventStoreClientSettings.Create(
                             "esdb://admin:changeit@localhost:2113?tls=false")))
                 .AddSingleton<IEventStore, EsdbEventStore>()
-                .AddSingleton(DefaultEventSerializer.Instance)
                 .AddSingleton<AppSettings>()
                 .AddScoped<IAggregateStore, AggregateStore>()
                 .AddScoped<UserService>()
@@ -52,28 +48,14 @@ namespace Conduit.Api
                 .AddCors()
                 .AddControllers();
 
-            AccountsRegistration.Register();
-            ArticlesRegistration.Register();
-
             services.AddSingleton<ICheckpointStore, SqlServerCheckpointStore>();
 
-            services.AddSingleton(o =>
-                new TransactionalAllStreamSubscriptionService(
-                    o.GetService<EventStoreClient>()!,
-                    new AllStreamSubscriptionOptions
-                        {SubscriptionId = "ConduitSql"},
-                    o.GetService<ICheckpointStore>()!, new IEventHandler[]
-                    {
-                        new SqlArticleEventHandler(
-                            o.GetService<IConfiguration>()!, "ConduitSql",
-                            o.GetService<ILoggerFactory>()!),
-                        new SqlAccountsEventHandler(
-                            o.GetService<IConfiguration>()!, "ConduitSql",
-                            o.GetService<ILoggerFactory>()!)
-                    }, o.GetService<IEventSerializer>()!,
-                    o.GetService<ILoggerFactory>()));
-
-            services.AddHostedService(o => o.GetService<TransactionalAllStreamSubscriptionService>());
+            services.AddSubscription<TransactionalAllStreamSubscriptionService, AllStreamSubscriptionOptions>(
+                "ConduitSql",
+                builder => builder
+                .AddEventHandler<SqlArticleEventHandler>()
+                .AddEventHandler<SqlAccountsEventHandler>()
+            );
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

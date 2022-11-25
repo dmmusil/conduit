@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Eventuous;
 
 namespace Conduit.Api.Features.Articles.Events
 {
+    [EventType("ArticlePublished")]
     public record ArticlePublished(
         string ArticleId,
         string Title,

@@ -64,7 +64,8 @@ namespace Conduit.Api.Features.Articles
                     author.Image,
                     false),
                 tags);
-            var (state, _) = await _svc.Handle(cmd, CancellationToken.None);
+            var result = await _svc.Handle(cmd, CancellationToken.None);
+            var state = result.State;
             return Ok(StateToArticleResponse(state, false));
         }
 
@@ -113,7 +114,8 @@ namespace Conduit.Api.Features.Articles
             {
                 Article = update.Article with {ArticleId = article.ArticleId}
             };
-            var (state, _) = await _svc.Handle(update.Article, CancellationToken.None);
+            var result = await _svc.Handle(update.Article, CancellationToken.None);
+            var state = result.State;
             return Ok(StateToArticleResponse(state, false));
         }
 
@@ -140,7 +142,8 @@ namespace Conduit.Api.Features.Articles
             var article = await _articleRepository.GetArticleBySlug(slug);
             if (article == null) return NotFound();
             var favorite = new FavoriteArticle(article.ArticleId, user.Id);
-            var (state, _) = await _svc.Handle(favorite, CancellationToken.None);
+            var result = await _svc.Handle(favorite, CancellationToken.None);
+            var state = result.State;
             return Ok(StateToArticleResponse(state, false));
         }
 
@@ -152,7 +155,8 @@ namespace Conduit.Api.Features.Articles
             var article = await _articleRepository.GetArticleBySlug(slug);
             if (article == null) return NotFound();
             var unfavorite = new UnfavoriteArticle(article.ArticleId, user.Id);
-            var (state, _) = await _svc.Handle(unfavorite, CancellationToken.None);
+            var result = await _svc.Handle(unfavorite, CancellationToken.None);
+            var state = result.State;
             return Ok(StateToArticleResponse(state, false));
         }
 
