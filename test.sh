@@ -1,5 +1,5 @@
-docker-compose stop -t 1
-docker-compose rm -f
+docker-compose -f docker-compose.yml -f docker-compose-$(arch).yml stop -t 1
+docker-compose -f docker-compose.yml -f docker-compose-$(arch).yml rm -f
 docker-compose pull
-docker-compose up --build -d
+docker-compose -f docker-compose.yml -f docker-compose-$(arch).yml up --build -d
 dotnet test
