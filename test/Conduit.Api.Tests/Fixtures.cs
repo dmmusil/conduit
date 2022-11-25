@@ -13,7 +13,7 @@ namespace Conduit.Api.Tests
             get
             {
                 var aggregateStore = new AggregateStore(new InMemoryEventStore());
-                return new UserService(aggregateStore);
+                return new UserService(aggregateStore, new StreamNameMap());
             }
         }
 

@@ -1,9 +1,11 @@
 using System.Data;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts;
+using Conduit.Api.Features.Accounts.Aggregates;
 using Conduit.Api.Features.Accounts.Projectors;
 using Conduit.Api.Features.Accounts.Queries;
 using Conduit.Api.Features.Articles;
+using Conduit.Api.Features.Articles.Aggregates;
 using Conduit.Api.Features.Articles.Projectors;
 using Conduit.Api.Features.Articles.Queries;
 using Conduit.ReadModels;
@@ -56,6 +58,11 @@ namespace Conduit.Api
                 .AddEventHandler<SqlArticleEventHandler>()
                 .AddEventHandler<SqlAccountsEventHandler>()
             );
+
+            var streamMap = new StreamNameMap();
+            streamMap.Register<AccountId>(id => new StreamName($"Account-{id}"));
+            streamMap.Register<ArticleId>(id => new StreamName($"Article-{id}"));
+            services.AddSingleton(streamMap);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

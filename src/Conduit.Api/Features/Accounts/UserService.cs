@@ -9,10 +9,12 @@ namespace Conduit.Api.Features.Accounts
         UserService : ApplicationService<Account, AccountState, AccountId>
     {
         private readonly IAggregateStore _store;
+        private readonly StreamNameMap _map;
 
-        public UserService(IAggregateStore store) : base(store)
+        public UserService(IAggregateStore store, StreamNameMap map) : base(store)
         {
             _store = store;
+            _map = map;
             OnNew<Commands.Register>(
                 cmd => new AccountId(cmd.User.Id),
                 (account, cmd) =>
@@ -42,7 +44,8 @@ namespace Conduit.Api.Features.Accounts
 
         public async Task<User> Load(string userId)
         {
-            var account = await _store.Load<Account>(new StreamName(new AccountId($"Account-{userId}")),
+            var account = await _store.Load<Account>(
+                _map.GetStreamName<Account, AccountId>(new AccountId(userId)),
                 CancellationToken.None);
             var state = account.State;
             return new User(userId, state.Email, state.Username, state.Bio, state.Image);
