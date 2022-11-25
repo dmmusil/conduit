@@ -2,16 +2,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Conduit.Api.Features.Accounts.Aggregates;
 using Eventuous;
+using Eventuous.Subscriptions.Checkpoints;
+using Microsoft.Extensions.Logging;
 
 namespace Conduit.Api.Features.Accounts
 {
     public class
-        UserService : ApplicationService<Account, AccountState, AccountId>
+        UserService : ImmediatelyConsistentApplicationService<Account, AccountState, AccountId>
     {
         private readonly IAggregateStore _store;
         private readonly StreamNameMap _map;
 
-        public UserService(IAggregateStore store, StreamNameMap map) : base(store)
+        public UserService(
+            IAggregateStore store,
+            StreamNameMap map,
+            ICheckpointStore checkpointStore,
+            ILoggerFactory loggerFactory) : base(store,
+            checkpointStore, loggerFactory)
         {
             _store = store;
             _map = map;
