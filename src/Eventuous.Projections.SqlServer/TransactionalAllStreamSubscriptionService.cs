@@ -53,6 +53,7 @@ namespace Eventuous.Projections.SqlServer
                 TransactionalHandler,
                 false,
                 HandleDrop,
+                filterOptions,
                 cancellationToken: cancellationToken);
 
             _sub = await subscribeTask.NoContext();
@@ -103,7 +104,7 @@ namespace Eventuous.Projections.SqlServer
                     evt.EventStreamId,
                     evt.EventNumber,
                     evt.Position.CommitPosition,
-                    _sequence++,
+                    evt.Position.CommitPosition,
                     evt.Created,
                     message,
                     Options.MetadataSerializer.DeserializeMeta(Options, evt.Metadata, e.OriginalStreamId),
