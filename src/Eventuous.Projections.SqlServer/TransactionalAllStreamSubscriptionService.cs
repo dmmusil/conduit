@@ -25,7 +25,6 @@ namespace Eventuous.Projections.SqlServer
             AllStreamSubscriptionOptions options,
             ICheckpointStore checkpointStore,
             ConsumePipe consumePipe,
-            int concurrencyLimit,
             ILoggerFactory loggerFactory,
             EventStoreClient eventStoreClient) : base(options, checkpointStore, consumePipe, 1, loggerFactory)
         {
@@ -44,21 +43,18 @@ namespace Eventuous.Projections.SqlServer
                         ct));
 
             var (_, position) = await GetCheckpoint(cancellationToken).NoContext();
-            var subscribeTask = position != null
-                ? _eventStoreClient.SubscribeToAllAsync(
-                    FromAll.After(new Position(position.Value, position.Value)),
-                    TransactionalHandler,
-                    false,
-                    HandleDrop,
-                    filterOptions,
-                    cancellationToken: cancellationToken)
-                : _eventStoreClient.SubscribeToAllAsync(
-                    FromAll.Start,
-                    TransactionalHandler,
-                    false,
-                    HandleDrop,
-                    filterOptions,
-                    cancellationToken: cancellationToken);
+
+            var from = position != null
+                ? FromAll.After(new Position(position.Value, position.Value))
+                : FromAll.Start;
+
+            var subscribeTask = _eventStoreClient.SubscribeToAllAsync(
+                from,
+                TransactionalHandler,
+                false,
+                HandleDrop,
+                filterOptions,
+                cancellationToken: cancellationToken);
 
             _sub = await subscribeTask.NoContext();
         }
@@ -77,6 +73,8 @@ namespace Eventuous.Projections.SqlServer
             _log.LogWarning($"Subscription {SubscriptionId} dropped. Reason: {arg2}");
         }
 
+        private ulong _sequence;
+
         /// <summary>
         /// Wrap event handling and checkpoint updates in a transaction.
         /// </summary>
@@ -91,9 +89,14 @@ namespace Eventuous.Projections.SqlServer
             try
             {
                 var evt = e.Event;
+                var result =
+                    DefaultEventSerializer.Instance.DeserializeEvent(evt.Data.Span, evt.EventType, "application/json");
+                object? message = null;
+                if (result is SuccessfullyDeserialized s)
+                {
+                    message = s.Payload;
+                }
                 _log.LogDebug($"Subscription {SubscriptionId} got an event {evt.EventType}");
-                using var tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-
                 var context = new MessageConsumeContext(
                     evt.EventId.ToString(),
                     evt.EventType,
@@ -101,16 +104,15 @@ namespace Eventuous.Projections.SqlServer
                     evt.EventStreamId,
                     evt.EventNumber,
                     evt.Position.CommitPosition,
-                    evt.Position.CommitPosition,
+                    _sequence++,
                     evt.Created,
-                    e,
+                    message,
                     Options.MetadataSerializer.DeserializeMeta(Options, evt.Metadata, e.OriginalStreamId),
                     SubscriptionId,
                     ct
                 );
-                await Handler(context);
 
-                tx.Complete();
+                await HandleInternal(context);
             }
             catch (Exception exception)
             {

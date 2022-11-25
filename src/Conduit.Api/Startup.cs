@@ -1,11 +1,9 @@
 using System.Data;
 using Conduit.Api.Auth;
 using Conduit.Api.Features.Accounts;
-using Conduit.Api.Features.Accounts.Events;
 using Conduit.Api.Features.Accounts.Projectors;
 using Conduit.Api.Features.Accounts.Queries;
 using Conduit.Api.Features.Articles;
-using Conduit.Api.Features.Articles.Events;
 using Conduit.Api.Features.Articles.Projectors;
 using Conduit.Api.Features.Articles.Queries;
 using Conduit.ReadModels;
@@ -49,8 +47,6 @@ namespace Conduit.Api
                 .AddSingleton<ISchemaManagement, SchemaManagement>()
                 .AddCors()
                 .AddControllers();
-
-            
 
             services.AddSingleton<ICheckpointStore, SqlServerCheckpointStore>();
 
