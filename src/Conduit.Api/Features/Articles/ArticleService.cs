@@ -1,13 +1,19 @@
 using Conduit.Api.Features.Articles.Aggregates;
 using Conduit.Api.Features.Articles.Commands;
 using Eventuous;
+using Eventuous.Subscriptions.Checkpoints;
+using Microsoft.Extensions.Logging;
 
 namespace Conduit.Api.Features.Articles
 {
     public class
-        ArticleService : ApplicationService<Article, ArticleState, ArticleId>
+        ArticleService : ImmediatelyConsistentApplicationService<Article, ArticleState, ArticleId>
     {
-        public ArticleService(IAggregateStore store) : base(store)
+        public ArticleService(
+            IAggregateStore store, 
+            ICheckpointStore checkpointStore,
+            ILoggerFactory loggerFactory) :
+            base(store, checkpointStore, loggerFactory)
         {
             OnNew<PublishArticle>(
                 cmd => new ArticleId(cmd.ArticleId),

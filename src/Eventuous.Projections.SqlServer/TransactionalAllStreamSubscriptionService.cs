@@ -36,10 +36,10 @@ namespace Eventuous.Projections.SqlServer
         {
             var filterOptions = new SubscriptionFilterOptions(
                 EventTypeFilter.ExcludeSystemEvents(),
-                10,
+                1,
                 (_, p, ct) =>
                     StoreCheckpoint(
-                        new EventPosition(p.CommitPosition, DateTime.UtcNow),
+                        new EventPosition(p.PreparePosition, DateTime.UtcNow),
                         ct));
 
             var (_, position) = await GetCheckpoint(cancellationToken).NoContext();
@@ -104,7 +104,7 @@ namespace Eventuous.Projections.SqlServer
                     evt.EventStreamId,
                     evt.EventNumber,
                     evt.Position.CommitPosition,
-                    _sequence++,
+                    evt.Position.CommitPosition,
                     evt.Created,
                     message,
                     Options.MetadataSerializer.DeserializeMeta(Options, evt.Metadata, e.OriginalStreamId),

@@ -3,6 +3,8 @@ using Conduit.Api.Fakes;
 using Conduit.Api.Features.Accounts;
 using Conduit.Api.Features.Accounts.Events;
 using Eventuous;
+using Eventuous.Subscriptions.Checkpoints;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Conduit.Api.Tests
 {
@@ -13,7 +15,8 @@ namespace Conduit.Api.Tests
             get
             {
                 var aggregateStore = new AggregateStore(new InMemoryEventStore());
-                return new UserService(aggregateStore, new StreamNameMap());
+                return new UserService(aggregateStore, new StreamNameMap(), new NoOpCheckpointStore(),
+                    new NullLoggerFactory());
             }
         }
 

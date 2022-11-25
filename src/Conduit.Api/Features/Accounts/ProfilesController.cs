@@ -44,7 +44,7 @@ namespace Conduit.Api.Features.Accounts
             var command = new Commands.FollowUser(
                 new AccountId(follower.Id),
                 account.Id);
-            await _svc.Handle(command, CancellationToken.None);
+            await _svc.HandleImmediate(command);
 
             return Ok(
                 new ProfileEnvelope(
@@ -67,7 +67,7 @@ namespace Conduit.Api.Features.Accounts
             var command = new Commands.UnfollowUser(
                 new AccountId(follower.Id),
                 account.Id);
-            await _svc.Handle(command, CancellationToken.None);
+            await _svc.HandleImmediate(command);
 
             return Ok(
                 new ProfileEnvelope(

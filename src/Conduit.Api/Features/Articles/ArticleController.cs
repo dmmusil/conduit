@@ -64,7 +64,7 @@ namespace Conduit.Api.Features.Articles
                     author.Image,
                     false),
                 tags);
-            var result = await _svc.Handle(cmd, CancellationToken.None);
+            var result = await _svc.HandleImmediate(cmd);
             var state = result.State;
             return Ok(StateToArticleResponse(state, false));
         }
@@ -114,7 +114,7 @@ namespace Conduit.Api.Features.Articles
             {
                 Article = update.Article with {ArticleId = article.ArticleId}
             };
-            var result = await _svc.Handle(update.Article, CancellationToken.None);
+            var result = await _svc.HandleImmediate(update.Article);
             var state = result.State;
             return Ok(StateToArticleResponse(state, false));
         }
@@ -130,7 +130,7 @@ namespace Conduit.Api.Features.Articles
                 return Forbid();
 
             var cmd = new DeleteArticle(article.ArticleId);
-            await _svc.Handle(cmd, CancellationToken.None);
+            await _svc.HandleImmediate(cmd);
             return NoContent();
         }
 
@@ -142,7 +142,7 @@ namespace Conduit.Api.Features.Articles
             var article = await _articleRepository.GetArticleBySlug(slug);
             if (article == null) return NotFound();
             var favorite = new FavoriteArticle(article.ArticleId, user.Id);
-            var result = await _svc.Handle(favorite, CancellationToken.None);
+            var result = await _svc.HandleImmediate(favorite);
             var state = result.State;
             return Ok(StateToArticleResponse(state, false));
         }
@@ -155,7 +155,7 @@ namespace Conduit.Api.Features.Articles
             var article = await _articleRepository.GetArticleBySlug(slug);
             if (article == null) return NotFound();
             var unfavorite = new UnfavoriteArticle(article.ArticleId, user.Id);
-            var result = await _svc.Handle(unfavorite, CancellationToken.None);
+            var result = await _svc.HandleImmediate(unfavorite);
             var state = result.State;
             return Ok(StateToArticleResponse(state, false));
         }

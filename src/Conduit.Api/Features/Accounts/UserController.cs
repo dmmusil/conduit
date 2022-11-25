@@ -36,7 +36,7 @@ namespace Conduit.Api.Features.Accounts
 
             var token = user.Token;
             update = update with {StreamId = user.Id};
-            var result = await _svc.Handle(update, CancellationToken.None);
+            var result = await _svc.HandleImmediate(update);
             var state = result.State;
             return Ok(
                 new UserEnvelope(
