@@ -35,12 +35,7 @@ namespace Eventuous.Projections.SqlServer
         protected override async ValueTask Subscribe(CancellationToken cancellationToken)
         {
             var filterOptions = new SubscriptionFilterOptions(
-                EventTypeFilter.ExcludeSystemEvents(),
-                1,
-                (_, p, ct) =>
-                    StoreCheckpoint(
-                        new EventPosition(p.PreparePosition, DateTime.UtcNow),
-                        ct));
+                EventTypeFilter.ExcludeSystemEvents());
 
             var (_, position) = await GetCheckpoint(cancellationToken).NoContext();
 
@@ -113,7 +108,7 @@ namespace Eventuous.Projections.SqlServer
                 );
 
                 await HandleInternal(context);
-                //await StoreCheckpoint(new EventPosition(evt.Position.CommitPosition, evt.Created), ct);
+                await StoreCheckpoint(new EventPosition(evt.Position.CommitPosition, evt.Created), ct);
             }
             catch (Exception exception)
             {
