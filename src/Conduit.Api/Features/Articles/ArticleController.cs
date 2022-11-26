@@ -112,7 +112,7 @@ namespace Conduit.Api.Features.Articles
             // set the article ID now that it's known after querying by incoming slug
             update = update with
             {
-                Article = update.Article with {ArticleId = article.ArticleId}
+                Article = update.Article with { ArticleId = article.ArticleId }
             };
             var result = await _svc.HandleImmediate(update.Article);
             var state = result.State;

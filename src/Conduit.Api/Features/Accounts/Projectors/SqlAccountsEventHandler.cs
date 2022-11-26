@@ -30,13 +30,13 @@ namespace Conduit.Api.Features.Accounts.Projectors
                 AccountUnfollowed e => new CommandDefinition("delete from Followers where FollowedUserId=@UnfollowedId and FollowingUserId=@StreamId", e),
                 _ => default
             };
-            
+
             return ArrayOf(command);
         }
     }
 
-    
-    
+
+
     public class UserRegisteredInsert
     {
         public UserRegisteredInsert(UserRegistered userRegistered)

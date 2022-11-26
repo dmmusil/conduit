@@ -81,12 +81,12 @@ namespace Conduit.Api.Tests.Integration
                 new ArticlePublished(Guid.NewGuid().ToString("N"), "Follow me",
                     "Follow me".ToSlug(), "Follow me", "Follow me", uniqueId,
                     UniqueUsername, null, null, DateTime.UtcNow,
-                    new[] { "doesn't matter" }));    
-            
+                    new[] { "doesn't matter" }));
+
             await using var connection =
                 new SqlConnection(
                     configuration.GetConnectionString("ReadModels"));
-            
+
             await connection.ExecuteAsync(articleInsert.Command);
         }
 
@@ -172,7 +172,7 @@ namespace Conduit.Api.Tests.Integration
                         "How to train your dragon",
                         "Ever wonder how?",
                         "You have to believe",
-                        new[] {"reactjs", "angularjs", "dragons"})),
+                        new[] { "reactjs", "angularjs", "dragons" })),
                 "/api/articles");
 
             var body =
@@ -321,7 +321,8 @@ namespace Conduit.Api.Tests.Integration
             var command = new Register(
                 Fixtures.UserRegistration with
                 {
-                    Email = UniqueEmail, Username = UniqueUsername
+                    Email = UniqueEmail,
+                    Username = UniqueUsername
                 });
             var response = await SendCommand(client, command, "/api/users");
             var envelope = await response.Content.ReadFromJsonAsync<UserEnvelope>();

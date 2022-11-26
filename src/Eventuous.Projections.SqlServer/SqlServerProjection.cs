@@ -51,7 +51,7 @@ namespace Eventuous.Projections.SqlServer
         protected abstract IEnumerable<CommandDefinition> GetCommand(object evt);
 
         protected static IEnumerable<CommandDefinition> ArrayOf(params CommandDefinition[] commands) => commands;
-  
+
         public async ValueTask<EventHandlingStatus> HandleEvent(IMessageConsumeContext context)
         {
             await HandleEvent(context.Message!, context.GlobalPosition);

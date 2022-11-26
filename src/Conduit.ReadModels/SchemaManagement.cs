@@ -39,7 +39,7 @@ namespace Conduit.ReadModels
                     .Build();
 
             upgradeEngine.PerformUpgrade();
-            
+
             _created = true;
         }
 

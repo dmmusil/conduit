@@ -18,7 +18,7 @@ namespace Conduit.Api.Features.Accounts.Queries
             const string query =
                 "select StreamId as Id, Email, Username, Bio, Image from Accounts where Email=@email";
             return await _connection.QuerySingleOrDefaultAsync<User>(
-                query, new {email});
+                query, new { email });
         }
 
         public async Task<User?> GetUserByUsername(string username)
@@ -26,7 +26,7 @@ namespace Conduit.Api.Features.Accounts.Queries
             const string query =
                 "select StreamId as Id, Email, Username, Bio, Image from Accounts where Username=@username";
             return await _connection.QuerySingleOrDefaultAsync<User>(
-                query, new {username});
+                query, new { username });
         }
 
         public async Task<bool> UsernameExists(
@@ -50,7 +50,7 @@ namespace Conduit.Api.Features.Accounts.Queries
             const string query =
                 "select StreamId as Id, Email, Username, Bio, Image from Accounts where StreamId=@uuid";
             return await _connection.QuerySingleOrDefaultAsync<User>(
-                query, new {uuid});
+                query, new { uuid });
         }
 
         public async Task<Profile?> ProfileWithFollowingStatus(
@@ -68,7 +68,7 @@ namespace Conduit.Api.Features.Accounts.Queries
                     false);
 
             var isFollowing = await IsUserFollowing(callerId, profile.Id);
-            
+
             return new Profile(
                 profile.Username,
                 profile.Bio,
@@ -91,7 +91,7 @@ namespace Conduit.Api.Features.Accounts.Queries
             const string query =
                 "select StreamId as Id, Email, Username, Bio, Image, PasswordHash from Accounts where Email=@email";
             var user = await _connection.QuerySingleOrDefaultAsync<dynamic>(
-                query, new {email});
+                query, new { email });
             var valid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
             return valid
                 ? new User(user.Id, user.Email, user.Username, user.Bio,

@@ -44,7 +44,7 @@ namespace Conduit.Api.Features.Articles.Projectors
         public TagBatchInsert(ArticlePublished e)
         {
             const string query = "insert into Tags (Tag, ArticleId) values (@Tag, @ArticleId)";
-            Command = new CommandDefinition(query, e.Tags.Select(t => new {Tag = t, e.ArticleId}));
+            Command = new CommandDefinition(query, e.Tags.Select(t => new { Tag = t, e.ArticleId }));
         }
 
         public CommandDefinition Command { get; }
@@ -86,5 +86,5 @@ insert into Articles
         }
         public CommandDefinition Command { get; }
     }
-    
+
 }

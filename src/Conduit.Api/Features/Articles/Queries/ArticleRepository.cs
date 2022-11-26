@@ -22,7 +22,7 @@ namespace Conduit.Api.Features.Articles.Queries
 select * from Articles where TitleSlug=@slug
 ";
             await using var connection = Connection;
-            var article = await connection.QueryFirstOrDefaultAsync<ArticleDocument>(query, new {slug});
+            var article = await connection.QueryFirstOrDefaultAsync<ArticleDocument>(query, new { slug });
             return article;
         }
 
@@ -57,7 +57,7 @@ select * from Articles where TitleSlug=@slug
             order by a.PublishDate desc
             ";
             await using var connection = Connection;
-            return await connection.QueryAsync<ArticleDocument>(query, new {Id = userId});
+            return await connection.QueryAsync<ArticleDocument>(query, new { Id = userId });
         }
     }
 }

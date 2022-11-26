@@ -10,7 +10,7 @@ namespace Conduit.Api.Features.Articles
         ArticleService : ImmediatelyConsistentApplicationService<Article, ArticleState, ArticleId>
     {
         public ArticleService(
-            IAggregateStore store, 
+            IAggregateStore store,
             ICheckpointStore checkpointStore,
             ILoggerFactory loggerFactory) :
             base(store, checkpointStore, loggerFactory)

@@ -25,7 +25,7 @@ namespace Eventuous.Projections.SqlServer
             await using var connection = new SqlConnection(_connectionString);
 
             await _manager.CreateSchemaOnce();
-            
+
             const string query = @"
             select Position 
             from Checkpoints 

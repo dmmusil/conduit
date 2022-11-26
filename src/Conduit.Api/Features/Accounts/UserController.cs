@@ -35,7 +35,7 @@ namespace Conduit.Api.Features.Accounts
                 return Conflict("Username already taken");
 
             var token = user.Token;
-            update = update with {StreamId = user.Id};
+            update = update with { StreamId = user.Id };
             var result = await _svc.HandleImmediate(update);
             var state = result.State;
             return Ok(

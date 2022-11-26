@@ -73,17 +73,17 @@ namespace Conduit.Api.Features.Accounts.Aggregates
                         PasswordHash = passwordHash,
                         Registered = true
                     },
-                EmailUpdated(_, var email) => this with {Email = email},
+                EmailUpdated(_, var email) => this with { Email = email },
                 UsernameUpdated(_, var username) => this with
                 {
                     Username = username
                 },
-                BioUpdated(_, var bio) => this with {Bio = bio},
+                BioUpdated(_, var bio) => this with { Bio = bio },
                 PasswordUpdated(_, var passwordHash) => this with
                 {
                     PasswordHash = passwordHash
                 },
-                ImageUpdated(_, var image) => this with {Image = image},
+                ImageUpdated(_, var image) => this with { Image = image },
                 AccountFollowed e => this with
                 {
                     FollowedProfiles = FollowedProfiles.Add(e.FollowedId)
@@ -106,7 +106,7 @@ namespace Conduit.Api.Features.Accounts.Aggregates
         public string? Bio { get; private init; }
         public string? Image { get; private init; }
         public bool Registered { get; private init; }
-        
+
         private ImmutableHashSet<string> FollowedProfiles { get; init; } =
             ImmutableHashSet<string>.Empty;
 

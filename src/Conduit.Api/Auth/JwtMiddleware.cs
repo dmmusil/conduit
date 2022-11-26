@@ -60,7 +60,7 @@ namespace Conduit.Api.Auth
                     },
                     out SecurityToken validatedToken);
 
-                var jwtToken = (JwtSecurityToken) validatedToken;
+                var jwtToken = (JwtSecurityToken)validatedToken;
                 var userId = jwtToken.Claims.First(x => x.Type == "id").Value;
                 // attach user to context o successful jwt validation
                 var account = await userService.Load(userId);

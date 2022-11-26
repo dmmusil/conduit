@@ -93,16 +93,20 @@ namespace Conduit.Api.Features.Articles.Aggregates
                     },
                 TitleUpdated(_, var title, var titleSlug, var updated) => this
                     with
-                    {
-                        Title = title, Slug = titleSlug, UpdatedAt = updated
-                    },
+                {
+                    Title = title,
+                    Slug = titleSlug,
+                    UpdatedAt = updated
+                },
                 BodyUpdated(_, var body, var updated) => this with
                 {
-                    Body = body, UpdatedAt = updated
+                    Body = body,
+                    UpdatedAt = updated
                 },
                 DescriptionUpdated(_, var description, var updated) => this with
                 {
-                    Description = description, UpdatedAt = updated
+                    Description = description,
+                    UpdatedAt = updated
                 },
                 ArticleFavorited e => this with
                 {

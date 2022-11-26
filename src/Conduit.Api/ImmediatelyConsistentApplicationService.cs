@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Eventuous;
@@ -9,8 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace Conduit.Api;
 
 public class ImmediatelyConsistentApplicationService<T, TState, TId> : ApplicationService<T, TState, TId>
-    where T : Aggregate<TState>, new() 
-    where TState : AggregateState<TState>, new() 
+    where T : Aggregate<TState>, new()
+    where TState : AggregateState<TState>, new()
     where TId : AggregateId
 {
     private readonly ICheckpointStore _checkpointStore;
@@ -20,7 +18,7 @@ public class ImmediatelyConsistentApplicationService<T, TState, TId> : Applicati
         IAggregateStore store,
         ICheckpointStore checkpointStore,
         ILoggerFactory loggerFactory,
-        AggregateFactoryRegistry? factoryRegistry = null, 
+        AggregateFactoryRegistry? factoryRegistry = null,
         StreamNameMap? streamNameMap = null) : base(store,
         factoryRegistry, streamNameMap)
     {
@@ -29,7 +27,7 @@ public class ImmediatelyConsistentApplicationService<T, TState, TId> : Applicati
     }
 
     public async Task<Result<TState>> HandleImmediate(
-        object command, 
+        object command,
         string requiredReadModel = "ConduitSql",
         CancellationToken ct = default)
     {
