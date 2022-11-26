@@ -135,29 +135,19 @@ namespace Eventuous.Projections.SqlServer
                     Options.MetadataSerializer.DeserializeMeta(Options, evt.Metadata, e.OriginalStreamId),
                     SubscriptionId,
                     ct
-                );
-                context.LogContext = Log;
-                
-                var asyncContext = new AsyncConsumeContext(context, Acknowledge, Fail);
-                
-                await Handler(asyncContext);
+                )
+                {
+                    LogContext = Log
+                };
+
+                await Handler(context);
+                await StoreCheckpoint(new EventPosition(context.GlobalPosition, context.Created), CancellationToken.None);
             }
             catch (Exception exception)
             {
                 _log.LogError(exception.ToString());
                 throw;
             }
-        }
-
-        private ValueTask Fail(IMessageConsumeContext ctx, Exception exception)
-        {
-            _log.LogError("Failed {exception}", exception);
-            return ValueTask.CompletedTask;
-        }
-
-        private async ValueTask Acknowledge(IMessageConsumeContext ctx)
-        {
-            await StoreCheckpoint(new EventPosition(ctx.GlobalPosition, ctx.Created), CancellationToken.None);
         }
     }
 }

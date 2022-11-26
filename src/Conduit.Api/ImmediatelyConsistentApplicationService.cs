@@ -35,7 +35,7 @@ public class ImmediatelyConsistentApplicationService<T, TState, TId> : Applicati
         if (result is not OkResult<TState> ok) return result;
 
         var checkpoint = await _checkpointStore.GetLastCheckpoint(requiredReadModel, ct);
-        while (checkpoint.Position < ok.StreamPosition)
+        while (checkpoint.Position == null || checkpoint.Position.Value < ok.StreamPosition)
         {
             checkpoint = await _checkpointStore.GetLastCheckpoint(requiredReadModel, ct);
             _log.LogDebug($"Checkpoint: {checkpoint.Position}, stream position: {ok.StreamPosition}");
