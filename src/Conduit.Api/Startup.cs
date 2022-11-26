@@ -55,8 +55,8 @@ namespace Conduit.Api
             services.AddSubscription<TransactionalAllStreamSubscriptionService, AllStreamSubscriptionOptions>(
                 "ConduitSql",
                 builder => builder
-                .AddEventHandler<SqlArticleEventHandler>()
-                .AddEventHandler<SqlAccountsEventHandler>()
+                    .AddEventHandler<SqlArticleEventHandler>()
+                    .AddEventHandler<SqlAccountsEventHandler>()
             );
 
             var streamMap = new StreamNameMap();

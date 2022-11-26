@@ -39,7 +39,7 @@ public class ImmediatelyConsistentApplicationService<T, TState, TId> : Applicati
         {
             checkpoint = await _checkpointStore.GetLastCheckpoint(requiredReadModel, ct);
             _log.LogDebug($"Checkpoint: {checkpoint.Position}, stream position: {ok.StreamPosition}");
-            await Task.Delay(1000, ct);
+            await Task.Delay(10, ct);
         }
 
         return ok;

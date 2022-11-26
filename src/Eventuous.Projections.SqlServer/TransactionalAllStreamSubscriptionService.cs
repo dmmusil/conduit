@@ -8,6 +8,7 @@ using Eventuous.Subscriptions;
 using Eventuous.Subscriptions.Checkpoints;
 using Eventuous.Subscriptions.Context;
 using Eventuous.Subscriptions.Filters;
+using Eventuous.Subscriptions.Logging;
 using Microsoft.Extensions.Logging;
 using StreamSubscription = EventStore.Client.StreamSubscription;
 
@@ -15,8 +16,9 @@ namespace Eventuous.Projections.SqlServer
 {
     public class
         TransactionalAllStreamSubscriptionService :
-            EventSubscriptionWithCheckpoint<AllStreamSubscriptionOptions>
+            EventSubscription<AllStreamSubscriptionOptions>
     {
+        public ICheckpointStore CheckpointStore { get; }
         private readonly ILogger _log;
         private readonly EventStoreClient _eventStoreClient;
         private StreamSubscription _sub;
@@ -26,12 +28,31 @@ namespace Eventuous.Projections.SqlServer
             ICheckpointStore checkpointStore,
             ConsumePipe consumePipe,
             ILoggerFactory loggerFactory,
-            EventStoreClient eventStoreClient) : base(options, checkpointStore, consumePipe, 1, loggerFactory)
+            EventStoreClient eventStoreClient) : base(options, consumePipe, loggerFactory)
         {
+            CheckpointStore = checkpointStore;
             _eventStoreClient = eventStoreClient;
             _log = loggerFactory.CreateLogger<TransactionalAllStreamSubscriptionService>();
         }
 
+        private EventPosition? LastProcessed;
+        
+        protected async Task<Checkpoint> GetCheckpoint(CancellationToken cancellationToken) {
+            if (IsRunning && LastProcessed != null) {
+                return new Checkpoint(Options.SubscriptionId, LastProcessed.Position);
+            }
+
+            Logger.Current = Log;
+
+            var checkpoint = await CheckpointStore
+                .GetLastCheckpoint(Options.SubscriptionId, cancellationToken)
+                .NoContext();
+
+            LastProcessed = new EventPosition(checkpoint.Position, DateTime.Now);
+
+            return checkpoint;
+        }
+        
         protected override async ValueTask Subscribe(CancellationToken cancellationToken)
         {
             var filterOptions = new SubscriptionFilterOptions(
@@ -54,6 +75,15 @@ namespace Eventuous.Projections.SqlServer
             _sub = await subscribeTask.NoContext();
         }
 
+        private async Task StoreCheckpoint(EventPosition eventPosition, CancellationToken cancellationToken) {
+            LastProcessed = eventPosition;
+
+            await CheckpointStore.StoreCheckpoint(
+                new Checkpoint(SubscriptionId, eventPosition.Position),
+                true,
+                cancellationToken
+            );
+        }
         protected override ValueTask Unsubscribe(CancellationToken cancellationToken)
         {
             _sub.Dispose();
@@ -106,15 +136,28 @@ namespace Eventuous.Projections.SqlServer
                     SubscriptionId,
                     ct
                 );
-
-                await HandleInternal(context);
-                await StoreCheckpoint(new EventPosition(evt.Position.CommitPosition, evt.Created), ct);
+                context.LogContext = Log;
+                
+                var asyncContext = new AsyncConsumeContext(context, Acknowledge, Fail);
+                
+                await Handler(asyncContext);
             }
             catch (Exception exception)
             {
                 _log.LogError(exception.ToString());
                 throw;
             }
+        }
+
+        private ValueTask Fail(IMessageConsumeContext ctx, Exception exception)
+        {
+            _log.LogError("Failed {exception}", exception);
+            return ValueTask.CompletedTask;
+        }
+
+        private async ValueTask Acknowledge(IMessageConsumeContext ctx)
+        {
+            await StoreCheckpoint(new EventPosition(ctx.GlobalPosition, ctx.Created), CancellationToken.None);
         }
     }
 }

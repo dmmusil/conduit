@@ -6,6 +6,6 @@
         (
             Id       varchar(200) not null,
             Position bigint       null,
-            constraint PK_Checkpoints primary key (Id)
+            constraint PK_Checkpoints primary key (Id) with (ignore_dup_key=on)
         )
     end
