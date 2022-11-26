@@ -25,14 +25,15 @@ namespace Conduit.Api.Tests.Integration
 {
     public class Accounts : IClassFixture<WebApplicationFactory<Startup>>
     {
-        private const string UniqueEmail = "unique@email.com";
-        private const string UniqueUsername = "unique";
+        private static readonly string UniqueEmail = $"{Uid}@email.com";
+        private static readonly string UniqueUsername = Uid;
 
         private readonly WebApplicationFactory<Startup> _factory;
-
+        private static string Uid => Guid.NewGuid().ToString("N");
         public Accounts(WebApplicationFactory<Startup> factory)
         {
             _factory = factory;
+            Fixtures.SetupAccountFixture($"{Uid}@jake.jake", Uid, Uid);
         }
 
         [Fact]
@@ -76,10 +77,11 @@ namespace Conduit.Api.Tests.Integration
         private async Task GenerateFeed(string uniqueId,
             IConfiguration configuration)
         {
+            var title = Uid;
             // add an article by the followed user to appear in the test user's feed
             var articleInsert = new ArticleInsertCommand(
-                new ArticlePublished(Guid.NewGuid().ToString("N"), "Follow me",
-                    "Follow me".ToSlug(), "Follow me", "Follow me", uniqueId,
+                new ArticlePublished(Guid.NewGuid().ToString("N"), title,
+                    title.ToSlug(), "Follow me", "Follow me", uniqueId,
                     UniqueUsername, null, null, DateTime.UtcNow,
                     new[] { "doesn't matter" }));
 
@@ -321,6 +323,7 @@ namespace Conduit.Api.Tests.Integration
             var command = new Register(
                 Fixtures.UserRegistration with
                 {
+                    Id = Uid,
                     Email = UniqueEmail,
                     Username = UniqueUsername
                 });
@@ -372,7 +375,7 @@ namespace Conduit.Api.Tests.Integration
 
         private static async Task<string?> Login(HttpClient client, string id)
         {
-            var command = new LogIn(id, Fixtures.UserLogin);
+            var command = new LogIn(id, new UserLogin(Fixtures.UserRegistration.Email, Fixtures.UserRegistration.Password));
             var response = await SendCommand(
                 client,
                 command,
@@ -390,7 +393,7 @@ namespace Conduit.Api.Tests.Integration
             var user = await response.Content.ReadFromJsonAsync<UserEnvelope>();
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Equal("jake", user?.User.Username);
+            Assert.Equal(Fixtures.UserRegistration.Username, user?.User.Username);
         }
 
         private static async Task<HttpResponseMessage> SendCommand(

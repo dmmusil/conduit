@@ -6,6 +6,6 @@
         (
             FollowedUserId  varchar(32) not null,
             FollowingUserId varchar(32) not null,
-            constraint PK_Followers primary key (FollowedUserId, FollowingUserId)
+            constraint PK_Followers primary key (FollowedUserId, FollowingUserId) with (ignore_dup_key=on)
         )
     end

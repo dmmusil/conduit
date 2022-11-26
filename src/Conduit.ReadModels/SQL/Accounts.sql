@@ -10,6 +10,6 @@
             PasswordHash varchar(200)  not null,
             Bio          varchar(1000) null,
             Image        varchar(200)  null,
-            constraint PK_Accounts primary key (StreamId)
+            constraint PK_Accounts primary key (StreamId) with (ignore_dup_key=on) on [primary]
         )
     end

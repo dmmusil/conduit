@@ -102,7 +102,7 @@ namespace Eventuous.Projections.SqlServer
                     evt.EventType,
                     "application/json",
                     evt.EventStreamId,
-                    evt.EventNumber,
+                    evt.Position.CommitPosition,
                     evt.Position.CommitPosition,
                     evt.Position.CommitPosition,
                     evt.Created,
@@ -113,6 +113,7 @@ namespace Eventuous.Projections.SqlServer
                 );
 
                 await HandleInternal(context);
+                //await StoreCheckpoint(new EventPosition(evt.Position.CommitPosition, evt.Created), ct);
             }
             catch (Exception exception)
             {

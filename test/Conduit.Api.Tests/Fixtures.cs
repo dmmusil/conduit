@@ -20,12 +20,15 @@ namespace Conduit.Api.Tests
             }
         }
 
+        private static UserRegistration? _instance;
+
+        public static void SetupAccountFixture(string email, string username, string password) => _instance =
+            new UserRegistration(Guid.NewGuid().ToString("N"), email, username, password);
+
         public static UserRegistration UserRegistration =>
-            new(Guid.NewGuid().ToString("N"),
+            _instance ??= new UserRegistration(Guid.NewGuid().ToString("N"),
                 "jake@jake.jake",
                 "jake",
                 "jakejake");
-
-        public static UserLogin UserLogin => new("jake@jake.jake", "jakejake");
     }
 }

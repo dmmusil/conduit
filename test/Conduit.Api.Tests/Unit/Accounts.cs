@@ -1,5 +1,7 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Conduit.Api.Features.Accounts;
 using Xunit;
 
 namespace Conduit.Api.Tests.Unit
@@ -11,7 +13,10 @@ namespace Conduit.Api.Tests.Unit
         {
             var svc = Fixtures.UserService;
 
-            var user = Fixtures.UserRegistration;
+            var user = new UserRegistration(Guid.NewGuid().ToString("N"),
+                "jake@jake.jake",
+                "jake",
+                "jakejake");
             var result = await svc.Handle(
                 new Features.Accounts.Commands.Register(user),
                 CancellationToken.None);
