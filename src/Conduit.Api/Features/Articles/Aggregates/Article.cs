@@ -82,7 +82,7 @@ namespace Conduit.Api.Features.Articles.Aggregates
                     var authorImage,
                     var publishDate,
                     var tags
-                    )
+                )
                     => this with
                     {
                         Id = new ArticleId(articleId),
@@ -119,8 +119,8 @@ namespace Conduit.Api.Features.Articles.Aggregates
                         Description = description,
                         UpdatedAt = updated
                     },
-                ArticleFavorited e => this with {_favoritedBy = _favoritedBy.Add(e.UserId)},
-                ArticleUnfavorited e => this with {_favoritedBy = _favoritedBy.Remove(e.UserId)},
+                ArticleFavorited e => this with { _favoritedBy = _favoritedBy.Add(e.UserId) },
+                ArticleUnfavorited e => this with { _favoritedBy = _favoritedBy.Remove(e.UserId) },
                 _ => this
             };
 
