@@ -17,7 +17,8 @@ namespace Eventuous.Projections.SqlServer
         public SqlServerCheckpointStore(
             IConfiguration config,
             ISchemaManagement manager,
-            ILogger<SqlServerCheckpointStore> log)
+            ILogger<SqlServerCheckpointStore> log
+        )
         {
             _manager = manager;
             _log = log;
@@ -26,33 +27,38 @@ namespace Eventuous.Projections.SqlServer
 
         public async ValueTask<Checkpoint> GetLastCheckpoint(
             string checkpointId,
-            CancellationToken cancellationToken = new CancellationToken())
+            CancellationToken cancellationToken = new CancellationToken()
+        )
         {
             await using var connection = new SqlConnection(_connectionString);
 
             await _manager.CreateSchemaOnce();
 
-            const string query = @"
+            const string query =
+                @"
             select Position 
             from Checkpoints 
             where Id=@Id";
 
             var result = await connection.QuerySingleOrDefaultAsync<long>(
                 query,
-                new {Id = checkpointId});
+                new { Id = checkpointId }
+            );
             return result == default
                 ? new Checkpoint(checkpointId, null)
-                : new Checkpoint(checkpointId, (ulong?) result);
+                : new Checkpoint(checkpointId, (ulong?)result);
         }
 
         public async ValueTask<Checkpoint> StoreCheckpoint(
             Checkpoint checkpoint,
             bool force,
-            CancellationToken cancellationToken = new CancellationToken())
+            CancellationToken cancellationToken = new CancellationToken()
+        )
         {
-            _log.LogDebug($"Storing {checkpoint}, force: {force}");            
+            _log.LogDebug($"Storing {checkpoint}, force: {force}");
             await using var connection = new SqlConnection(_connectionString);
-            const string query = @"
+            const string query =
+                @"
 update Checkpoints
 set Position=@Position
 where Id=@Id and (Position<@Position or @Force=1)
@@ -65,7 +71,8 @@ end
 ";
             await connection.ExecuteAsync(
                 query,
-                new {checkpoint.Id, Position = (long?) checkpoint.Position, Force = force ? 1 : 0});
+                new { checkpoint.Id, Position = (long?)checkpoint.Position, Force = force ? 1 : 0 }
+            );
             return checkpoint;
         }
     }

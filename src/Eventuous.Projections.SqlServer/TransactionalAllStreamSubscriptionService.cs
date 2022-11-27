@@ -14,9 +14,8 @@ using StreamSubscription = EventStore.Client.StreamSubscription;
 
 namespace Eventuous.Projections.SqlServer
 {
-    public class
-        TransactionalAllStreamSubscriptionService :
-            EventSubscription<AllStreamSubscriptionOptions>
+    public class TransactionalAllStreamSubscriptionService
+        : EventSubscription<AllStreamSubscriptionOptions>
     {
         public ICheckpointStore CheckpointStore { get; }
         private readonly ILogger _log;
@@ -28,7 +27,8 @@ namespace Eventuous.Projections.SqlServer
             ICheckpointStore checkpointStore,
             ConsumePipe consumePipe,
             ILoggerFactory loggerFactory,
-            EventStoreClient eventStoreClient) : base(options, consumePipe, loggerFactory)
+            EventStoreClient eventStoreClient
+        ) : base(options, consumePipe, loggerFactory)
         {
             CheckpointStore = checkpointStore;
             _eventStoreClient = eventStoreClient;
@@ -36,9 +36,11 @@ namespace Eventuous.Projections.SqlServer
         }
 
         private EventPosition? LastProcessed;
-        
-        protected async Task<Checkpoint> GetCheckpoint(CancellationToken cancellationToken) {
-            if (IsRunning && LastProcessed != null) {
+
+        protected async Task<Checkpoint> GetCheckpoint(CancellationToken cancellationToken)
+        {
+            if (IsRunning && LastProcessed != null)
+            {
                 return new Checkpoint(Options.SubscriptionId, LastProcessed.Position);
             }
 
@@ -52,17 +54,19 @@ namespace Eventuous.Projections.SqlServer
 
             return checkpoint;
         }
-        
+
         protected override async ValueTask Subscribe(CancellationToken cancellationToken)
         {
             var filterOptions = new SubscriptionFilterOptions(
-                EventTypeFilter.ExcludeSystemEvents());
+                EventTypeFilter.ExcludeSystemEvents()
+            );
 
             var (_, position) = await GetCheckpoint(cancellationToken).NoContext();
 
-            var from = position != null
-                ? FromAll.After(new Position(position.Value, position.Value))
-                : FromAll.Start;
+            var from =
+                position != null
+                    ? FromAll.After(new Position(position.Value, position.Value))
+                    : FromAll.Start;
 
             var subscribeTask = _eventStoreClient.SubscribeToAllAsync(
                 from,
@@ -70,12 +74,17 @@ namespace Eventuous.Projections.SqlServer
                 false,
                 HandleDrop,
                 filterOptions,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken
+            );
 
             _sub = await subscribeTask.NoContext();
         }
 
-        private async Task StoreCheckpoint(EventPosition eventPosition, CancellationToken cancellationToken) {
+        private async Task StoreCheckpoint(
+            EventPosition eventPosition,
+            CancellationToken cancellationToken
+        )
+        {
             LastProcessed = eventPosition;
 
             await CheckpointStore.StoreCheckpoint(
@@ -84,6 +93,7 @@ namespace Eventuous.Projections.SqlServer
                 cancellationToken
             );
         }
+
         protected override ValueTask Unsubscribe(CancellationToken cancellationToken)
         {
             _sub.Dispose();
@@ -93,7 +103,8 @@ namespace Eventuous.Projections.SqlServer
         private void HandleDrop(
             StreamSubscription arg1,
             SubscriptionDroppedReason arg2,
-            Exception? arg3)
+            Exception? arg3
+        )
         {
             _log.LogWarning($"Subscription {SubscriptionId} dropped. Reason: {arg2}");
         }
@@ -109,13 +120,17 @@ namespace Eventuous.Projections.SqlServer
         private async Task TransactionalHandler(
             StreamSubscription _,
             ResolvedEvent e,
-            CancellationToken ct)
+            CancellationToken ct
+        )
         {
             try
             {
                 var evt = e.Event;
-                var result =
-                    DefaultEventSerializer.Instance.DeserializeEvent(evt.Data.Span, evt.EventType, "application/json");
+                var result = DefaultEventSerializer.Instance.DeserializeEvent(
+                    evt.Data.Span,
+                    evt.EventType,
+                    "application/json"
+                );
                 object? message = null;
                 if (result is SuccessfullyDeserialized s)
                 {
@@ -132,7 +147,11 @@ namespace Eventuous.Projections.SqlServer
                     evt.Position.CommitPosition,
                     evt.Created,
                     message,
-                    Options.MetadataSerializer.DeserializeMeta(Options, evt.Metadata, e.OriginalStreamId),
+                    Options.MetadataSerializer.DeserializeMeta(
+                        Options,
+                        evt.Metadata,
+                        e.OriginalStreamId
+                    ),
                     SubscriptionId,
                     ct
                 )
@@ -141,7 +160,10 @@ namespace Eventuous.Projections.SqlServer
                 };
 
                 await Handler(context);
-                await StoreCheckpoint(new EventPosition(context.GlobalPosition, context.Created), CancellationToken.None);
+                await StoreCheckpoint(
+                    new EventPosition(context.GlobalPosition, context.Created),
+                    CancellationToken.None
+                );
             }
             catch (Exception exception)
             {

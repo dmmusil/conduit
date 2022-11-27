@@ -15,5 +15,6 @@ namespace Conduit.Api.Features.Articles
         DateTime? UpdatedAt,
         bool Favorited,
         int FavoritesCount,
-        IEnumerable<string> TagList);
+        IEnumerable<string> TagList
+    );
 }

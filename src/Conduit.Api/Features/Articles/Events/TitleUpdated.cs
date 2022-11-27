@@ -8,5 +8,6 @@ namespace Conduit.Api.Features.Articles.Events
         string ArticleId,
         string Title,
         string TitleSlug,
-        DateTime UpdatedAt);
+        DateTime UpdatedAt
+    );
 }

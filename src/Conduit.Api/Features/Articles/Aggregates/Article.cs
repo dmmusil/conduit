@@ -17,7 +17,8 @@ namespace Conduit.Api.Features.Articles.Aggregates
             string description,
             string body,
             Author author,
-            IEnumerable<string> tags)
+            IEnumerable<string> tags
+        )
         {
             EnsureDoesntExist();
             Apply(
@@ -32,7 +33,9 @@ namespace Conduit.Api.Features.Articles.Aggregates
                     author.Bio,
                     author.Image,
                     DateTime.UtcNow,
-                    tags));
+                    tags
+                )
+            );
         }
 
         public void Update(string? title, string? description, string? body)
@@ -40,12 +43,7 @@ namespace Conduit.Api.Features.Articles.Aggregates
             EnsureExists();
             var updatedAt = DateTime.UtcNow;
             if (title != null)
-                Apply(
-                    new TitleUpdated(
-                        State.Id,
-                        title,
-                        title.ToSlug(),
-                        updatedAt));
+                Apply(new TitleUpdated(State.Id, title, title.ToSlug(), updatedAt));
             if (description != null)
                 Apply(new DescriptionUpdated(State.Id, description, updatedAt));
             if (body != null)
@@ -72,10 +70,20 @@ namespace Conduit.Api.Features.Articles.Aggregates
         public override ArticleState When(object @event) =>
             @event switch
             {
-                ArticlePublished(var articleId, var title, var titleSlug, var
-                    description, var body, var authorId, var authorUsername, var
-                    authorBio, var authorImage, var publishDate, var tags) =>
-                    this with
+                ArticlePublished(
+                    var articleId,
+                    var title,
+                    var titleSlug,
+                    var description,
+                    var body,
+                    var authorId,
+                    var authorUsername,
+                    var authorBio,
+                    var authorImage,
+                    var publishDate,
+                    var tags
+                    )
+                    => this with
                     {
                         Id = new ArticleId(articleId),
                         Title = title,
@@ -87,35 +95,32 @@ namespace Conduit.Api.Features.Articles.Aggregates
                             authorUsername,
                             authorBio,
                             authorImage,
-                            false),
+                            false
+                        ),
                         CreatedAt = publishDate,
                         Tags = tags
                     },
-                TitleUpdated(_, var title, var titleSlug, var updated) => this
-                    with
-                {
-                    Title = title,
-                    Slug = titleSlug,
-                    UpdatedAt = updated
-                },
-                BodyUpdated(_, var body, var updated) => this with
-                {
-                    Body = body,
-                    UpdatedAt = updated
-                },
-                DescriptionUpdated(_, var description, var updated) => this with
-                {
-                    Description = description,
-                    UpdatedAt = updated
-                },
-                ArticleFavorited e => this with
-                {
-                    _favoritedBy = _favoritedBy.Add(e.UserId)
-                },
-                ArticleUnfavorited e => this with
-                {
-                    _favoritedBy = _favoritedBy.Remove(e.UserId)
-                },
+                TitleUpdated(_, var title, var titleSlug, var updated)
+                    => this with
+                    {
+                        Title = title,
+                        Slug = titleSlug,
+                        UpdatedAt = updated
+                    },
+                BodyUpdated(_, var body, var updated)
+                    => this with
+                    {
+                        Body = body,
+                        UpdatedAt = updated
+                    },
+                DescriptionUpdated(_, var description, var updated)
+                    => this with
+                    {
+                        Description = description,
+                        UpdatedAt = updated
+                    },
+                ArticleFavorited e => this with {_favoritedBy = _favoritedBy.Add(e.UserId)},
+                ArticleUnfavorited e => this with {_favoritedBy = _favoritedBy.Remove(e.UserId)},
                 _ => this
             };
 
@@ -130,10 +135,8 @@ namespace Conduit.Api.Features.Articles.Aggregates
         public string Title { get; private init; } = null!;
         public int FavoriteCount => _favoritedBy.Count;
 
-        private ImmutableHashSet<string> _favoritedBy =
-            ImmutableHashSet<string>.Empty;
+        private ImmutableHashSet<string> _favoritedBy = ImmutableHashSet<string>.Empty;
 
-        public bool FavoritedBy(string accountId) =>
-            _favoritedBy.Contains(accountId);
+        public bool FavoritedBy(string accountId) => _favoritedBy.Contains(accountId);
     }
 }

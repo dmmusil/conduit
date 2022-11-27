@@ -25,8 +25,7 @@ namespace Conduit.Api.Features.Accounts
 
         [HttpPut]
         [Authorize]
-        public async Task<ActionResult> Update(
-            [FromBody] Commands.UpdateUser update)
+        public async Task<ActionResult> Update([FromBody] Commands.UpdateUser update)
         {
             var user = HttpContext.GetLoggedInUser();
             if (await _users.EmailExists(update.User.Email, user))
@@ -40,13 +39,9 @@ namespace Conduit.Api.Features.Accounts
             var state = result.State;
             return Ok(
                 new UserEnvelope(
-                    new User(
-                        state.Id,
-                        state.Email,
-                        state.Username,
-                        state.Bio,
-                        state.Image,
-                        token)));
+                    new User(state.Id, state.Email, state.Username, state.Bio, state.Image, token)
+                )
+            );
         }
     }
 }

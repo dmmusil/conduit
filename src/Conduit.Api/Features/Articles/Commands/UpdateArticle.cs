@@ -4,5 +4,6 @@ namespace Conduit.Api.Features.Articles.Commands
         string? ArticleId,
         string? Title,
         string? Description,
-        string? Body);
+        string? Body
+    );
 }

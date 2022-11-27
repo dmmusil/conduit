@@ -9,5 +9,6 @@ namespace Conduit.Api.Features.Articles.Commands
         string Description,
         string Body,
         Author Author,
-        IEnumerable<string> Tags);
+        IEnumerable<string> Tags
+    );
 }

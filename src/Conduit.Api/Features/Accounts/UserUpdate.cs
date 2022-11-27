@@ -5,5 +5,6 @@ namespace Conduit.Api.Features.Accounts
         string? Username = null,
         string? Password = null,
         string? Bio = null,
-        string? Image = null);
+        string? Image = null
+    );
 }

@@ -9,13 +9,9 @@ namespace Conduit.Api.Features.Accounts.Aggregates
     {
         public void Register(AccountId userId, string username, string email, string passwordHash)
         {
-            if (State.Registered) return;
-            Apply(
-                new UserRegistered(
-                    userId,
-                    email,
-                    username,
-                    passwordHash));
+            if (State.Registered)
+                return;
+            Apply(new UserRegistered(userId, email, username, passwordHash));
         }
 
         public void Update(
@@ -23,7 +19,8 @@ namespace Conduit.Api.Features.Accounts.Aggregates
             string? username,
             string? password,
             string? bio,
-            string? image)
+            string? image
+        )
         {
             EnsureExists();
             if (email != null)
@@ -31,10 +28,7 @@ namespace Conduit.Api.Features.Accounts.Aggregates
             if (username != null)
                 Apply(new UsernameUpdated(State.Id, username));
             if (password != null)
-                Apply(
-                    new PasswordUpdated(
-                        State.Id,
-                        BCrypt.Net.BCrypt.HashPassword(password)));
+                Apply(new PasswordUpdated(State.Id, BCrypt.Net.BCrypt.HashPassword(password)));
             if (bio != null)
                 Apply(new BioUpdated(State.Id, bio));
             if (image != null)
@@ -44,14 +38,16 @@ namespace Conduit.Api.Features.Accounts.Aggregates
         public void Follow(string followedId)
         {
             EnsureExists();
-            if (State.AlreadyFollowing(followedId)) return;
+            if (State.AlreadyFollowing(followedId))
+                return;
             Apply(new AccountFollowed(State.Id, followedId));
         }
 
         public void Unfollow(string followedId)
         {
             EnsureExists();
-            if (State.NotFollowing(followedId)) return;
+            if (State.NotFollowing(followedId))
+                return;
             Apply(new AccountUnfollowed(State.Id, followedId));
         }
     }
@@ -64,8 +60,8 @@ namespace Conduit.Api.Features.Accounts.Aggregates
         {
             return @event switch
             {
-                UserRegistered(var streamId, var email, var username, var
-                    passwordHash) => this with
+                UserRegistered(var streamId, var email, var username, var passwordHash)
+                    => this with
                     {
                         Id = new AccountId(streamId),
                         Email = email,
@@ -74,28 +70,21 @@ namespace Conduit.Api.Features.Accounts.Aggregates
                         Registered = true
                     },
                 EmailUpdated(_, var email) => this with { Email = email },
-                UsernameUpdated(_, var username) => this with
-                {
-                    Username = username
-                },
+                UsernameUpdated(_, var username) => this with { Username = username },
                 BioUpdated(_, var bio) => this with { Bio = bio },
-                PasswordUpdated(_, var passwordHash) => this with
-                {
-                    PasswordHash = passwordHash
-                },
+                PasswordUpdated(_, var passwordHash) => this with { PasswordHash = passwordHash },
                 ImageUpdated(_, var image) => this with { Image = image },
-                AccountFollowed e => this with
-                {
-                    FollowedProfiles = FollowedProfiles.Add(e.FollowedId)
-                },
-                AccountUnfollowed e => this with
-                {
-                    FollowedProfiles =
-                    FollowedProfiles.Remove(e.UnfollowedId)
-                },
-                _ => throw new ArgumentOutOfRangeException(
-                    nameof(@event),
-                    "Unknown event")
+                AccountFollowed e
+                    => this with
+                    {
+                        FollowedProfiles = FollowedProfiles.Add(e.FollowedId)
+                    },
+                AccountUnfollowed e
+                    => this with
+                    {
+                        FollowedProfiles = FollowedProfiles.Remove(e.UnfollowedId)
+                    },
+                _ => throw new ArgumentOutOfRangeException(nameof(@event), "Unknown event")
             };
         }
 
@@ -110,10 +99,8 @@ namespace Conduit.Api.Features.Accounts.Aggregates
         private ImmutableHashSet<string> FollowedProfiles { get; init; } =
             ImmutableHashSet<string>.Empty;
 
-        public bool AlreadyFollowing(string followedId) =>
-            FollowedProfiles.Contains(followedId);
+        public bool AlreadyFollowing(string followedId) => FollowedProfiles.Contains(followedId);
 
-        public bool NotFollowing(string followedId) =>
-            !AlreadyFollowing(followedId);
+        public bool NotFollowing(string followedId) => !AlreadyFollowing(followedId);
     }
 }

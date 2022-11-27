@@ -15,20 +15,31 @@ namespace Conduit.Api.Tests
             get
             {
                 var aggregateStore = new AggregateStore(new InMemoryEventStore());
-                return new UserService(aggregateStore, new StreamNameMap(), new NoOpCheckpointStore(),
-                    new NullLoggerFactory());
+                return new UserService(
+                    aggregateStore,
+                    new StreamNameMap(),
+                    new NoOpCheckpointStore(),
+                    new NullLoggerFactory()
+                );
             }
         }
 
         private static UserRegistration? _instance;
 
-        public static void SetupAccountFixture(string email, string username, string password) => _instance =
-            new UserRegistration(Guid.NewGuid().ToString("N"), email, username, password);
+        public static void SetupAccountFixture(string email, string username, string password) =>
+            _instance = new UserRegistration(
+                Guid.NewGuid().ToString("N"),
+                email,
+                username,
+                password
+            );
 
         public static UserRegistration UserRegistration =>
-            _instance ??= new UserRegistration(Guid.NewGuid().ToString("N"),
+            _instance ??= new UserRegistration(
+                Guid.NewGuid().ToString("N"),
                 "jake@jake.jake",
                 "jake",
-                "jakejake");
+                "jakejake"
+            );
     }
 }

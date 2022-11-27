@@ -6,7 +6,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Conduit.Api;
 
-public class ImmediatelyConsistentApplicationService<T, TState, TId> : ApplicationService<T, TState, TId>
+public class ImmediatelyConsistentApplicationService<T, TState, TId>
+    : ApplicationService<T, TState, TId>
     where T : Aggregate<TState>, new()
     where TState : AggregateState<TState>, new()
     where TId : AggregateId
@@ -19,8 +20,8 @@ public class ImmediatelyConsistentApplicationService<T, TState, TId> : Applicati
         ICheckpointStore checkpointStore,
         ILoggerFactory loggerFactory,
         AggregateFactoryRegistry? factoryRegistry = null,
-        StreamNameMap? streamNameMap = null) : base(store,
-        factoryRegistry, streamNameMap)
+        StreamNameMap? streamNameMap = null
+    ) : base(store, factoryRegistry, streamNameMap)
     {
         _checkpointStore = checkpointStore;
         _log = loggerFactory.CreateLogger(GetType());
@@ -29,16 +30,20 @@ public class ImmediatelyConsistentApplicationService<T, TState, TId> : Applicati
     public async Task<Result<TState>> HandleImmediate(
         object command,
         string requiredReadModel = "ConduitSql",
-        CancellationToken ct = default)
+        CancellationToken ct = default
+    )
     {
         var result = await Handle(command, ct);
-        if (result is not OkResult<TState> ok) return result;
+        if (result is not OkResult<TState> ok)
+            return result;
 
         var checkpoint = await _checkpointStore.GetLastCheckpoint(requiredReadModel, ct);
         while (checkpoint.Position == null || checkpoint.Position.Value < ok.StreamPosition)
         {
             checkpoint = await _checkpointStore.GetLastCheckpoint(requiredReadModel, ct);
-            _log.LogDebug($"Checkpoint: {checkpoint.Position}, stream position: {ok.StreamPosition}");
+            _log.LogDebug(
+                $"Checkpoint: {checkpoint.Position}, stream position: {ok.StreamPosition}"
+            );
             await Task.Delay(10, ct);
         }
 

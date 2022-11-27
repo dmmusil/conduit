@@ -15,8 +15,7 @@ namespace Eventuous.Projections.SqlServer
         private readonly string _connectionString;
         protected readonly ILogger _log;
 
-        protected SqlServerProjection(IConfiguration configuration,
-            ILoggerFactory loggerFactory)
+        protected SqlServerProjection(IConfiguration configuration, ILoggerFactory loggerFactory)
         {
             _connectionString = configuration.GetConnectionString("ReadModels");
             _log = loggerFactory.CreateLogger(GetType());
@@ -36,8 +35,12 @@ namespace Eventuous.Projections.SqlServer
                         continue;
                     }
 
-                    _log.LogDebug("Projecting {Name}. {CommandText} - {Evt}",
-                        evt.GetType().Name, commandDefinition.CommandText, evt);
+                    _log.LogDebug(
+                        "Projecting {Name}. {CommandText} - {Evt}",
+                        evt.GetType().Name,
+                        commandDefinition.CommandText,
+                        evt
+                    );
                     await connection.ExecuteAsync(commandDefinition);
                 }
             }
@@ -50,7 +53,9 @@ namespace Eventuous.Projections.SqlServer
 
         protected abstract IEnumerable<CommandDefinition> GetCommand(object evt);
 
-        protected static IEnumerable<CommandDefinition> ArrayOf(params CommandDefinition[] commands) => commands;
+        protected static IEnumerable<CommandDefinition> ArrayOf(
+            params CommandDefinition[] commands
+        ) => commands;
 
         public async ValueTask<EventHandlingStatus> HandleEvent(IMessageConsumeContext context)
         {

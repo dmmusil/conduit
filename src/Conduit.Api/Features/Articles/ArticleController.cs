@@ -23,31 +23,28 @@ namespace Conduit.Api.Features.Articles
         public ArticleController(
             UserRepository userRepository,
             ArticleService svc,
-            ArticleRepository articleRepository) =>
-            (_userRepository, _svc, _articleRepository) =
-            (userRepository, svc, articleRepository);
+            ArticleRepository articleRepository
+        ) => (_userRepository, _svc, _articleRepository) = (userRepository, svc, articleRepository);
 
         [HttpGet, HttpGet("feed"), Authorize]
         public async Task<IActionResult> GetAll()
         {
-            var articles =
-                await _articleRepository.GetArticlesFromFollowedUsers(
-                    HttpContext.GetLoggedInUser().Id);
+            var articles = await _articleRepository.GetArticlesFromFollowedUsers(
+                HttpContext.GetLoggedInUser().Id
+            );
 
             return Ok(new FeedEnvelope(articles));
         }
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> Create(
-            [FromBody] CreateEnvelope envelope)
+        public async Task<IActionResult> Create([FromBody] CreateEnvelope envelope)
         {
             var user = HttpContext.GetLoggedInUser();
             var author = await _userRepository.GetUserByUuid(user.Id);
             var (title, description, body, tags) = envelope.Article;
 
-            var existingSlug =
-                await _articleRepository.GetArticleBySlug(title.ToSlug());
+            var existingSlug = await _articleRepository.GetArticleBySlug(title.ToSlug());
             if (existingSlug != null)
                 return Conflict($"{existingSlug} already exists.");
 
@@ -57,15 +54,11 @@ namespace Conduit.Api.Features.Articles
                 title.ToSlug(),
                 description,
                 body,
-                new Author(
-                    user.Id,
-                    author.Username,
-                    author.Bio,
-                    author.Image,
-                    false),
-                tags);
+                new Author(user.Id, author.Username, author.Bio, author.Image, false),
+                tags
+            );
             var result = await _svc.HandleImmediate(cmd);
-            var state = result.State;
+            var state = result.State!;
             return Ok(StateToArticleResponse(state, false));
         }
 
@@ -73,24 +66,21 @@ namespace Conduit.Api.Features.Articles
         public async Task<IActionResult> GetBySlug(string slug)
         {
             var a = await _articleRepository.GetArticleBySlug(slug);
-            if (a == null) return NotFound();
+            if (a == null)
+                return NotFound();
 
             var response = new ArticleResponse(
                 a.Title,
                 a.TitleSlug,
                 a.Description,
                 a.Body,
-                new Author(
-                    a.AuthorId,
-                    a.AuthorUsername,
-                    a.AuthorBio,
-                    a.AuthorImage,
-                    false),
+                new Author(a.AuthorId, a.AuthorUsername, a.AuthorBio, a.AuthorImage, false),
                 a.PublishDate,
                 a.UpdatedDate,
                 false,
                 a.FavoriteCount,
-                a.TagList);
+                a.TagList
+            );
             return Ok(new ArticleEnvelope(response));
         }
 
@@ -98,16 +88,17 @@ namespace Conduit.Api.Features.Articles
         [Authorize]
         public async Task<IActionResult> UpdateArticle(
             [FromBody] UpdateEnvelope update,
-            string slug)
+            string slug
+        )
         {
             var author = HttpContext.GetLoggedInUser();
             var article = await _articleRepository.GetArticleBySlug(slug);
-            if (article == null) return NotFound();
+            if (article == null)
+                return NotFound();
             if (article.AuthorId != author.Id)
                 return Forbid("Articles can only be updated by their author.");
             if (await CheckDuplicateSlug(update, article))
-                return Conflict(
-                    $"{update.Article.Title?.ToSlug()} already exists.");
+                return Conflict($"{update.Article.Title?.ToSlug()} already exists.");
 
             // set the article ID now that it's known after querying by incoming slug
             update = update with
@@ -124,7 +115,8 @@ namespace Conduit.Api.Features.Articles
         public async Task<IActionResult> Delete(string slug)
         {
             var article = await _articleRepository.GetArticleBySlug(slug);
-            if (article == null) return NotFound();
+            if (article == null)
+                return NotFound();
 
             if (article.AuthorId != HttpContext.GetLoggedInUser().Id)
                 return Forbid();
@@ -140,7 +132,8 @@ namespace Conduit.Api.Features.Articles
         {
             var user = HttpContext.GetLoggedInUser();
             var article = await _articleRepository.GetArticleBySlug(slug);
-            if (article == null) return NotFound();
+            if (article == null)
+                return NotFound();
             var favorite = new FavoriteArticle(article.ArticleId, user.Id);
             var result = await _svc.HandleImmediate(favorite);
             var state = result.State;
@@ -153,39 +146,38 @@ namespace Conduit.Api.Features.Articles
         {
             var user = HttpContext.GetLoggedInUser();
             var article = await _articleRepository.GetArticleBySlug(slug);
-            if (article == null) return NotFound();
+            if (article == null)
+                return NotFound();
             var unfavorite = new UnfavoriteArticle(article.ArticleId, user.Id);
             var result = await _svc.HandleImmediate(unfavorite);
             var state = result.State;
             return Ok(StateToArticleResponse(state, false));
         }
 
-        private async Task<bool> CheckDuplicateSlug(
-            UpdateEnvelope update,
-            ArticleDocument article)
+        private async Task<bool> CheckDuplicateSlug(UpdateEnvelope update, ArticleDocument article)
         {
             var newSlug = update.Article.Title?.ToSlug();
-            var existingSlug = newSlug != null
-                ? await _articleRepository.GetArticleBySlug(newSlug)
-                : null;
+            var existingSlug =
+                newSlug != null ? await _articleRepository.GetArticleBySlug(newSlug) : null;
             return existingSlug != null && existingSlug.ArticleId != article.ArticleId;
         }
 
-        private static ArticleEnvelope
-            StateToArticleResponse(ArticleState a, bool favorite) =>
-            new(new ArticleResponse(
-                a.Title,
-                a.Slug,
-                a.Description,
-                a.Body,
-                a.Author,
-                a.CreatedAt,
-                a.UpdatedAt,
-                favorite,
-                a.FavoriteCount,
-                a.Tags ?? Array.Empty<string>()));
+        private static ArticleEnvelope StateToArticleResponse(ArticleState a, bool favorite) =>
+            new(
+                new ArticleResponse(
+                    a.Title,
+                    a.Slug,
+                    a.Description,
+                    a.Body,
+                    a.Author,
+                    a.CreatedAt,
+                    a.UpdatedAt,
+                    favorite,
+                    a.FavoriteCount,
+                    a.Tags ?? Array.Empty<string>()
+                )
+            );
     }
-
 
     public record UpdateEnvelope(UpdateArticle Article);
 

@@ -32,9 +32,13 @@ namespace Conduit.Api
         {
             services
                 .AddSingleton(
-                    _ => new EventStoreClient(
-                        EventStoreClientSettings.Create(
-                            "esdb://admin:changeit@localhost:2113?tls=false")))
+                    _ =>
+                        new EventStoreClient(
+                            EventStoreClientSettings.Create(
+                                "esdb://admin:changeit@localhost:2113?tls=false"
+                            )
+                        )
+                )
                 .AddSingleton<IEventStore, EsdbEventStore>()
                 .AddSingleton<AppSettings>()
                 .AddScoped<IAggregateStore, AggregateStore>()
@@ -43,20 +47,27 @@ namespace Conduit.Api
                 .AddScoped<ArticleRepository>()
                 .AddScoped<ArticleService>()
                 .AddScoped<JwtIssuer>()
-                .AddScoped<IDbConnection>(o =>
-                    new SqlConnection(o.GetService<IConfiguration>()
-                        .GetConnectionString("ReadModels")))
+                .AddScoped<IDbConnection>(
+                    o =>
+                        new SqlConnection(
+                            o.GetService<IConfiguration>().GetConnectionString("ReadModels")
+                        )
+                )
                 .AddSingleton<ISchemaManagement, SchemaManagement>()
                 .AddCors()
                 .AddControllers();
 
             services.AddSingleton<ICheckpointStore, SqlServerCheckpointStore>();
 
-            services.AddSubscription<TransactionalAllStreamSubscriptionService, AllStreamSubscriptionOptions>(
+            services.AddSubscription<
+                TransactionalAllStreamSubscriptionService,
+                AllStreamSubscriptionOptions
+            >(
                 "ConduitSql",
-                builder => builder
-                    .AddEventHandler<SqlArticleEventHandler>()
-                    .AddEventHandler<SqlAccountsEventHandler>()
+                builder =>
+                    builder
+                        .AddEventHandler<SqlArticleEventHandler>()
+                        .AddEventHandler<SqlAccountsEventHandler>()
             );
 
             var streamMap = new StreamNameMap();
@@ -74,8 +85,7 @@ namespace Conduit.Api
             }
 
             app.UseRouting();
-            app.UseCors(
-                x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
             app.UseMiddleware<JwtMiddleware>();
 

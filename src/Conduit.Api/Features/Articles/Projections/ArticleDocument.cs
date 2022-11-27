@@ -17,13 +17,39 @@ namespace Conduit.Api.Features.Articles.Projections
         DateTime PublishDate,
         DateTime? UpdatedDate,
         int FavoriteCount,
-        IEnumerable<string> TagList)
+        IEnumerable<string> TagList
+    )
     {
         [JsonConstructor]
-        public ArticleDocument(string articleId, string title, string titleSlug, string description, string body,
-            string authorId, string authorUsername, string authorBio, string authorImage, DateTime publishDate,
-            DateTime? updatedDate, int favoriteCount) : this(articleId, title, titleSlug, description, body, authorId,
-            authorUsername, authorBio, authorImage, publishDate, updatedDate, favoriteCount, new List<string>())
+        public ArticleDocument(
+            string articleId,
+            string title,
+            string titleSlug,
+            string description,
+            string body,
+            string authorId,
+            string authorUsername,
+            string authorBio,
+            string authorImage,
+            DateTime publishDate,
+            DateTime? updatedDate,
+            int favoriteCount
+        )
+            : this(
+                articleId,
+                title,
+                titleSlug,
+                description,
+                body,
+                authorId,
+                authorUsername,
+                authorBio,
+                authorImage,
+                publishDate,
+                updatedDate,
+                favoriteCount,
+                new List<string>()
+            )
         {
             ArticleId = articleId;
             Title = title;

@@ -42,7 +42,8 @@ namespace Conduit.Api.Auth
         private async Task AttachUserToContext(
             HttpContext context,
             UserService userService,
-            string token)
+            string token
+        )
         {
             try
             {
@@ -58,7 +59,8 @@ namespace Conduit.Api.Auth
                         ValidateAudience = false,
                         ClockSkew = TimeSpan.Zero
                     },
-                    out SecurityToken validatedToken);
+                    out SecurityToken validatedToken
+                );
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
                 var userId = jwtToken.Claims.First(x => x.Type == "id").Value;

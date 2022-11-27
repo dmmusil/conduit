@@ -13,8 +13,7 @@ namespace Conduit.ReadModels
     {
         private readonly IConfiguration _configuration;
 
-        private string ConnectionString =>
-            _configuration.GetConnectionString("ReadModels");
+        private string ConnectionString => _configuration.GetConnectionString("ReadModels");
 
         private SqlConnection MasterConnection =>
             new SqlConnection(_configuration.GetConnectionString("Master"));
@@ -28,15 +27,16 @@ namespace Conduit.ReadModels
 
         public async Task CreateSchemaOnce()
         {
-            if (_created) return;
+            if (_created)
+                return;
 
             await EnsureDatabase();
 
-            var upgradeEngine =
-                DeployChanges.To.SqlDatabase(ConnectionString)
-                    .WithScriptsEmbeddedInAssembly(GetType().Assembly)
-                    .LogToConsole()
-                    .Build();
+            var upgradeEngine = DeployChanges.To
+                .SqlDatabase(ConnectionString)
+                .WithScriptsEmbeddedInAssembly(GetType().Assembly)
+                .LogToConsole()
+                .Build();
 
             upgradeEngine.PerformUpgrade();
 
@@ -47,7 +47,8 @@ namespace Conduit.ReadModels
         {
             await using var connection = MasterConnection;
             await TryConnect(connection);
-            const string query = @"
+            const string query =
+                @"
 if not exists(select *
           from sys.databases
           where name = 'conduit')

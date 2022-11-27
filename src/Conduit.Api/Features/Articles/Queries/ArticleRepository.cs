@@ -18,11 +18,15 @@ namespace Conduit.Api.Features.Articles.Queries
 
         public async Task<ArticleDocument?> GetArticleBySlug(string slug)
         {
-            const string query = @"
+            const string query =
+                @"
 select * from Articles where TitleSlug=@slug
 ";
             await using var connection = Connection;
-            var article = await connection.QueryFirstOrDefaultAsync<ArticleDocument>(query, new { slug });
+            var article = await connection.QueryFirstOrDefaultAsync<ArticleDocument>(
+                query,
+                new { slug }
+            );
             return article;
         }
 
@@ -33,11 +37,13 @@ select * from Articles where TitleSlug=@slug
             return await connection.QueryAsync<string>(query);
         }
 
-        private SqlConnection Connection => new SqlConnection(_config.GetConnectionString("ReadModels"));
+        private SqlConnection Connection =>
+            new SqlConnection(_config.GetConnectionString("ReadModels"));
 
         public async Task<IEnumerable<ArticleDocument>> GetArticlesFromFollowedUsers(string userId)
         {
-            const string query = @"
+            const string query =
+                @"
             select 
                    a.ArticleId
                  , a.Title

@@ -14,8 +14,7 @@ namespace Conduit.Api.Features.Articles
         public TagsController(ArticleRepository articles) => _articles = articles;
 
         [HttpGet]
-        public async Task<IActionResult> Get() =>
-            Ok(new TagsEnvelope(await _articles.GetTags()));
+        public async Task<IActionResult> Get() => Ok(new TagsEnvelope(await _articles.GetTags()));
     }
 
     public record TagsEnvelope(IEnumerable<string> Tags);

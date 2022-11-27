@@ -7,5 +7,6 @@ namespace Conduit.Api.Features.Accounts.Events
         string StreamId,
         string Email,
         string Username,
-        string PasswordHash);
+        string PasswordHash
+    );
 }

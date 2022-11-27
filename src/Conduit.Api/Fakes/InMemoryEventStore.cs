@@ -29,8 +29,7 @@ namespace Conduit.Api.Fakes
             _global.AddRange(events);
 
             return Task.FromResult(
-                new AppendEventsResult((ulong)(_global.Count - 1),
-                    existing.Version)
+                new AppendEventsResult((ulong)(_global.Count - 1), existing.Version)
             );
         }
 
@@ -39,17 +38,13 @@ namespace Conduit.Api.Fakes
             StreamReadPosition start,
             int count,
             CancellationToken cancellationToken
-        )
-            => Task.FromResult(FindStream(stream).GetEvents(start, count)
-                .ToArray());
+        ) => Task.FromResult(FindStream(stream).GetEvents(start, count).ToArray());
 
         public Task<StreamEvent[]> ReadEventsBackwards(
             StreamName stream,
             int count,
             CancellationToken cancellationToken
-        )
-            => Task.FromResult(FindStream(stream).GetEventsBackwards(count)
-                .ToArray());
+        ) => Task.FromResult(FindStream(stream).GetEventsBackwards(count).ToArray());
 
         public Task ReadStream(
             StreamName stream,
@@ -102,7 +97,6 @@ namespace Conduit.Api.Fakes
             return Task.CompletedTask;
         }
 
-
         // ReSharper disable once ReturnTypeCanBeEnumerable.Local
         InMemoryStream FindStream(StreamName stream)
         {
@@ -114,10 +108,7 @@ namespace Conduit.Api.Fakes
 
         class NotFound : Exception
         {
-            public NotFound(StreamName stream) : base(
-                $"Stream not found: {stream}")
-            {
-            }
+            public NotFound(StreamName stream) : base($"Stream not found: {stream}") { }
         }
     }
 
@@ -130,8 +121,7 @@ namespace Conduit.Api.Fakes
         StreamName _name;
         readonly List<StoredEvent> _events = new();
 
-        public InMemoryStream(StreamName name)
-            => _name = name;
+        public InMemoryStream(StreamName name) => _name = name;
 
         public void CheckVersion(ExpectedStreamVersion expectedVersion)
         {
@@ -152,13 +142,12 @@ namespace Conduit.Api.Fakes
             }
         }
 
-        public IEnumerable<StreamEvent> GetEvents(StreamReadPosition from,
-            int count)
+        public IEnumerable<StreamEvent> GetEvents(StreamReadPosition from, int count)
         {
-            var selected = _events
-                .SkipWhile(x => x.Position < from.Value);
+            var selected = _events.SkipWhile(x => x.Position < from.Value);
 
-            if (count > 0) selected = selected.Take(count);
+            if (count > 0)
+                selected = selected.Take(count);
 
             return selected.Select(x => x.Event);
         }
@@ -173,8 +162,7 @@ namespace Conduit.Api.Fakes
             }
         }
 
-        public void Truncate(ExpectedStreamVersion version,
-            StreamTruncatePosition position)
+        public void Truncate(ExpectedStreamVersion version, StreamTruncatePosition position)
         {
             CheckVersion(version);
             _events.RemoveAll(x => x.Position <= position.Value);
@@ -184,9 +172,6 @@ namespace Conduit.Api.Fakes
     class WrongVersion : Exception
     {
         public WrongVersion(ExpectedStreamVersion expected, int actual)
-            : base(
-                $"Wrong stream version. Expected {expected.Value}, actual {actual}")
-        {
-        }
+            : base($"Wrong stream version. Expected {expected.Value}, actual {actual}") { }
     }
 }

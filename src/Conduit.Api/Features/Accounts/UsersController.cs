@@ -14,11 +14,7 @@ namespace Conduit.Api.Features.Accounts
         private readonly JwtIssuer _jwtIssuer;
         private readonly UserRepository _users;
 
-
-        public UsersController(
-            UserService svc,
-            JwtIssuer jwtIssuer,
-            UserRepository users)
+        public UsersController(UserService svc, JwtIssuer jwtIssuer, UserRepository users)
         {
             _svc = svc;
             _jwtIssuer = jwtIssuer;
@@ -26,8 +22,7 @@ namespace Conduit.Api.Features.Accounts
         }
 
         [HttpPost]
-        public async Task<IActionResult> Register(
-            [FromBody] Commands.Register register)
+        public async Task<IActionResult> Register([FromBody] Commands.Register register)
         {
             if (await _users.EmailExists(register.User.Email))
                 return Conflict("Email already taken");
@@ -44,17 +39,16 @@ namespace Conduit.Api.Features.Accounts
                         state.Username,
                         state.Bio,
                         state.Image,
-                        Token: _jwtIssuer.GenerateJwtToken(state.Id))));
+                        Token: _jwtIssuer.GenerateJwtToken(state.Id)
+                    )
+                )
+            );
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> LogIn([FromBody] Commands.LogIn login)
         {
-            var error = NotFound(
-                new
-                {
-                    Errors = new { InvalidCredentials = "User not found." }
-                });
+            var error = NotFound(new { Errors = new { InvalidCredentials = "User not found." } });
             var (_, (email, password)) = login;
             var user = await _users.Authenticate(email, password);
             return user != null
@@ -66,7 +60,10 @@ namespace Conduit.Api.Features.Accounts
                             user.Username,
                             user.Bio,
                             user.Image,
-                            Token: _jwtIssuer.GenerateJwtToken(user.Id))))
+                            Token: _jwtIssuer.GenerateJwtToken(user.Id)
+                        )
+                    )
+                )
                 : error;
         }
     }

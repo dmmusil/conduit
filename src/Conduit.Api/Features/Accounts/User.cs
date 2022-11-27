@@ -8,11 +8,12 @@ namespace Conduit.Api.Features.Accounts
         string Username,
         string? Bio,
         string? Image,
-        string? Token = null)
+        string? Token = null
+    )
     {
         [JsonConstructor]
-        public User(string id, string email, string username, string? bio,
-            string? image) : this(id, email, username, bio, image, null)
+        public User(string id, string email, string username, string? bio, string? image)
+            : this(id, email, username, bio, image, null)
         {
             Id = id;
             Email = email;

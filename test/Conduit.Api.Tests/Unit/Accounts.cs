@@ -13,19 +13,21 @@ namespace Conduit.Api.Tests.Unit
         {
             var svc = Fixtures.UserService;
 
-            var user = new UserRegistration(Guid.NewGuid().ToString("N"),
+            var user = new UserRegistration(
+                Guid.NewGuid().ToString("N"),
                 "jake@jake.jake",
                 "jake",
-                "jakejake");
+                "jakejake"
+            );
             var result = await svc.Handle(
                 new Features.Accounts.Commands.Register(user),
-                CancellationToken.None);
+                CancellationToken.None
+            );
 
             var actual = result.State!;
             Assert.Equal(user.Email, actual.Email);
             Assert.Equal(user.Username, actual.Username);
-            Assert.True(
-                BCrypt.Net.BCrypt.Verify(user.Password, actual.PasswordHash));
+            Assert.True(BCrypt.Net.BCrypt.Verify(user.Password, actual.PasswordHash));
         }
     }
 }
