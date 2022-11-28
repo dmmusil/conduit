@@ -14,6 +14,7 @@ using Conduit.Api.Features.Accounts.Commands;
 using Conduit.Api.Features.Articles;
 using Conduit.Api.Features.Articles.Commands;
 using Conduit.Api.Features.Articles.Events;
+using Conduit.Api.Features.Articles.Projections;
 using Conduit.Api.Features.Articles.Projectors;
 using Dapper;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -123,12 +124,9 @@ namespace Conduit.Api.Tests.Integration
 
             var expectedFavoriteCount = method == HttpMethod.Post ? 1 : 0;
 
-            await GetFromProjection<ArticleEnvelope>(
-                client,
-                $"/api/articles/{slug}",
-                HttpStatusCode.OK,
-                article => article.Article.FavoritesCount == expectedFavoriteCount
-            );
+            var response = await client.GetAsync($"/api/articles/{slug}");
+            var article = await response.Content.ReadFromJsonAsync<ArticleEnvelope>();
+            Assert.Equal(article.Article.FavoritesCount, expectedFavoriteCount);
         }
 
         private static async Task UnfavoriteArticle(HttpClient client) =>
@@ -137,13 +135,8 @@ namespace Conduit.Api.Tests.Integration
         private static async Task DeleteArticle(HttpClient client)
         {
             const string slug = "how-not-to-train-your-dragon";
-
-            await GetFromProjection(client, $"/api/articles/{slug}", HttpStatusCode.OK);
-
             var response = await client.DeleteAsync($"/api/articles/{slug}");
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-
-            await GetFromProjection(client, $"/api/articles/{slug}", HttpStatusCode.NotFound);
         }
 
         private static async Task UpdateArticle(HttpClient client)
@@ -187,64 +180,12 @@ namespace Conduit.Api.Tests.Integration
             const string expectedSlug = "how-to-train-your-dragon";
             Assert.Equal(expectedSlug, body?.Article.Slug);
 
-            response = await GetFromProjection(
-                client,
-                $"/api/articles/{expectedSlug}",
-                HttpStatusCode.OK
-            );
+            response = await client.GetAsync($"/api/articles/{expectedSlug}");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             body = await response.Content.ReadFromJsonAsync<ArticleEnvelope>();
 
             Assert.Equal(Fixtures.UserRegistration.Username, body?.Article.Author.Username);
-        }
-
-        private static async Task GetFromProjection<T>(
-            HttpClient client,
-            string route,
-            HttpStatusCode expectedStatusCode,
-            Func<T, bool> test
-        )
-        {
-            var stopwatch = Stopwatch.StartNew();
-
-            var t = default(T);
-            HttpResponseMessage response = null!;
-            while (stopwatch.ElapsedMilliseconds < 2000)
-            {
-                response = await client.GetAsync(route);
-
-                if (response.StatusCode != expectedStatusCode)
-                    continue;
-                t = await response.Content.ReadFromJsonAsync<T>();
-                if (test(t!))
-                {
-                    return;
-                }
-            }
-
-            throw new Exception(
-                $"Projection didn't run within 2 seconds. Response code: {response.StatusCode} Body: {t}"
-            );
-        }
-
-        private static async Task<HttpResponseMessage> GetFromProjection(
-            HttpClient client,
-            string route,
-            HttpStatusCode expectedStatusCode
-        )
-        {
-            var stopwatch = Stopwatch.StartNew();
-
-            while (stopwatch.ElapsedMilliseconds < 2000)
-            {
-                var response = await client.GetAsync(route);
-
-                if (response.StatusCode == expectedStatusCode)
-                    return response;
-            }
-
-            throw new Exception("Projection didn't run within 2 seconds.");
         }
 
         private static async Task Follow(HttpClient client, string usernameToFollow)
@@ -255,13 +196,6 @@ namespace Conduit.Api.Tests.Integration
             );
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-            await GetFromProjection<ProfileEnvelope>(
-                client,
-                $"/api/profiles/{usernameToFollow}",
-                HttpStatusCode.OK,
-                profile => profile.Profile.Following
-            );
         }
 
         private static async Task Unfollow(HttpClient client, string usernameToUnfollow)
@@ -269,21 +203,12 @@ namespace Conduit.Api.Tests.Integration
             var response = await client.DeleteAsync($"/api/profiles/{usernameToUnfollow}/follow");
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-            await GetFromProjection<ProfileEnvelope>(
-                client,
-                $"/api/profiles/{usernameToUnfollow}",
-                HttpStatusCode.OK,
-                profile => profile.Profile.Following == false
-            );
         }
 
         private static async Task GetProfile(HttpClient client)
         {
-            var response = await GetFromProjection(
-                client,
-                $"/api/profiles/{Fixtures.UserRegistration.Username}",
-                HttpStatusCode.OK
+            var response = await client.GetAsync(
+                $"/api/profiles/{Fixtures.UserRegistration.Username}"
             );
             var profile = await response.Content.ReadFromJsonAsync<ProfileEnvelope>();
 
@@ -352,13 +277,6 @@ namespace Conduit.Api.Tests.Integration
             var command = new Register(Fixtures.UserRegistration);
             var response = await SendCommand(client, command, "/api/users");
             var user = await response.Content.ReadFromJsonAsync<UserEnvelope>();
-
-            await GetFromProjection(
-                client,
-                $"/api/profiles/{Fixtures.UserRegistration.Username}",
-                HttpStatusCode.OK
-            );
-
             return user!.User.Id;
         }
 
